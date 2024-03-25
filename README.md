@@ -1,5 +1,5 @@
 # TitinViscoelasticity
-Codes accompanying paper titled Mesoscopic Scale Analysis of Titin-Mediated Viscoelastic Passive Muscle Mechanics
+Codes accompanying paper titled Titin-Mediated Viscoelastic Passive Muscle Mechanics
 
 ## Data
 This folder includes source data (*/Raw*) as well as processed, averaged data for model identification (*Avg...\*.csv*). 
