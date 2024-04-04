@@ -1,5 +1,8 @@
-% Assuming mod = ones(10,1)
-% assuming pCa = Inf
+% Runs the passive model
+% Assuming mod = ones(22,1)
+% Assuming pCa = 11
+% Assuming drawPlots = true
+
 load SoHot.mat;
 % simtype = 'sin';
 simtype = 'ramp';

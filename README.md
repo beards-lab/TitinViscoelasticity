@@ -1,5 +1,5 @@
 # TitinViscoelasticity
-Codes accompanying paper titled Titin-Mediated Viscoelastic Passive Muscle Mechanics
+Data and codes accompanying paper titled Titin-Mediated Viscoelastic Passive Muscle Mechanics
 
 ## Data
 This folder includes source data (*/Raw*) as well as processed, averaged data for model identification (*Avg...\*.csv*). 
@@ -13,6 +13,6 @@ Contains plotting routines, if not plotted already as a part of other scripts el
 ## Model
 Contains scripts to optimized and run titin viscoelastic model under various conditions.
 * OptimizeCOmbined - runs and optimizes the model
-* RunCombinedModel - evaluates a single pCa level of the model for given ramp velocities
+* RunCombinedModel - evaluates a single pCa level of the model for given ramp velocities. 
 * dXdT - ODE equations of the model, solved by the ode solver
 * evalPowerFit - plots power-law fit of the data and model output.

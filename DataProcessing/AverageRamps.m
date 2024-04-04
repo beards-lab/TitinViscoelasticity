@@ -2,12 +2,12 @@
 % clear -except dataset;
 
 % using only the final dataset
-dataset{1} = load('DataStruct20230919.mat');
-dataset{2} = load('DataStruct20230927.mat');
-dataset{3} = load('DataStruct20230928.mat');
-dataset{4} = load('DataStruct20231027.mat');
-dataset{5} = load('DataStruct20231102.mat');
-dataset{6} = load('DataStruct20231107.mat');
+dataset{1} = load('Data/DataStruct20230919.mat');
+dataset{2} = load('Data/DataStruct20230927.mat');
+dataset{3} = load('Data/DataStruct20230928.mat');
+dataset{4} = load('Data/DataStruct20231027.mat');
+dataset{5} = load('Data/DataStruct20231102.mat');
+dataset{6} = load('Data/DataStruct20231107.mat');
 isMale = [1, 1, 0, 0, 1, 0];
 %% Figure representative ramps
 ts = [dataset{6}.dsc{1, 1}.datatable.t; ...
@@ -252,7 +252,7 @@ for i_rds = 1:length(rds)
     
     tab_rmpAvg = table(t_s' + 2, FLSDint(:, 2), FLSDint(:, 1)*Fmax, FLSDint(:, 3)*Fmax);
     tab_rmpAvg.Properties.VariableNames = {'Time', 'L', 'F', 'SD'};
-    writetable(tab_rmpAvg, ['data/' dsName '_' num2str(rds(i_rds)) 's.csv']);
+    writetable(tab_rmpAvg, ['../data/' dsName '_' num2str(rds(i_rds)) 's.csv']);
 %% plot the AVG
     % semilogx(outT, outF, 'k-');hold on;
     % semilogx(t_s, FLSDint(:, 1) + FLSDint(:, 3), '--', Color=[clin(end, :), 1], LineWidth=2);
