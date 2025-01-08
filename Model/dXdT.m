@@ -16,10 +16,12 @@ deltaF = kd*max(0,(L-s)/L_0).^nd - Fp;
 Vp = deltaF/mu;
 
 ij = (1:Nx)' + Nx*(0:Ng); % matrix of Ng X Nx indices over all elements
+% ij_att = ij + (Ng+1)*Nx; % matrix of attached elements
 
 % Attach/dettach rectifier connector - only for Ca
 if ~isempty(pa)
-    detach = kD*x(ij + (Ng+1)*Nx).*(1 + kDf*max(0, deltaF+Fp));
+    % detach = kD*x(ij + (Ng+1)*Nx).*(1 + kDf*(deltaF + Fp));
+    detach = kD*x(ij + (Ng+1)*Nx);
     g(ij)             = g(ij)             - kA*x(ij) + detach;
     g(ij + (Ng+1)*Nx) = g(ij + (Ng+1)*Nx) + kA*x(ij) - detach;
 
@@ -65,9 +67,9 @@ g(ij(:,2:(Ng+1))) = g(ij(:,2:(Ng+1))) + UR - FR;
 g(ij(:,1:Ng))     = g(ij(:,1:Ng))     - UR + FR;
 
 % unfolding for pa states
-if false || ~isempty(pa)
+if ~isempty(pa)
     NxNg = Nx*(Ng+1);
-    UR = RU.*pa(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
+    UR = kDf*RU.*pa(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
     g(ij(:,2:(Ng+1))+NxNg) = g(ij(:,2:(Ng+1))+NxNg) + UR - FR;
     g(ij(:,1:Ng)+NxNg)     = g(ij(:,1:Ng)+NxNg)     - UR + FR;
 end

@@ -1,7 +1,16 @@
-% Runs the passive model
-% Assuming mod = ones(22,1)
-% Assuming pCa = 11
-% Assuming drawPlots = true
+% Runs the passive model - could be run separately in a clear environment
+% or by OptimizeCOmbined.m
+
+if ~exist('mod', 'var')
+    % Nice fit including pCa4.4 0.1s, predicting rest
+    mod = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
+end
+if ~exist('pCa', 'var')
+    pCa = 11;
+end
+if ~exist('drawPlots', 'var')
+    drawPlots = true;
+end
 
 load SoHot.mat;
 % simtype = 'sin';
@@ -9,10 +18,10 @@ simtype = 'ramp';
 % simtype = 'rampbeat';
 
 % rampSet = [1];
-% rampSet = [2 4];
+rampSet = [2 4];
 % rampSet = [3]; % nly 100ms
 rampSet = [1 2 3 4];
-% rampSet = [4];
+rampSet = [4];
 
 % pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
 % pCa 10 - load Relaxed, run the PEVK attachment model
@@ -42,10 +51,10 @@ for i_rd = 1:length(rds)
   %   datatables{i_rd} = datatable;
   % elseif isnan(pCa)
       % newest format of experiments    
-    datatables{i_rd} = readtable(['..\Data\AvgRelaxed_' num2str(rds(i_rd)) 's.csv']);
+    datatables{i_rd} = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
   else
     if exist(['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv'], "file")
-        datatables{i_rd} = readtable(['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv']);
+        datatables{i_rd} = readtable(['..\Data\AvgMavaSetpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv']);
     else
         datatables{i_rd} = [];
     end
@@ -73,12 +82,12 @@ end
 % half-sarcomere ramp height
 % Lmax = 0.225;
 % Nx   = 25;          % number of space steps
-Nx   = 25;          % number of space steps
+Nx   = 15;          % number of space steps
 ds   = 1*(Lmax)/(Nx-1);      % space step size
 % use this to make sure the ds is big wnough
 % ds   = 1*(Lmax + 0.015)/(Nx-1);
 s  = (0:1:Nx-1)'.*ds; % strain vector
-Ng = 15; 
+Ng = 10; 
 % so all unfolded make mod(19) = Ng*delU slack, i.e. ~0.15 um. individual delU is about 0.01
 delU = mod(19)/Ng;
 
@@ -364,7 +373,7 @@ for j = rampSet
     x0 = reshape([pu, pa],[2*(Ng+1)*Nx,1]);
   end
   x0 = [x0; L0]; 
-  opts = odeset('RelTol',1e-3, 'AbsTol',1e-2);          
+  opts = odeset('RelTol',1e-1, 'AbsTol',1e-1);          
   % assert(length(times) == length(velocities), 'Must be same length')
   t = []; x = [];
   for i_section = 1:size(times, 1)
@@ -505,7 +514,7 @@ maxPu = 0; maxPa = 0;
                 ylabel('$n$', Interpreter='latex');
             elseif i_snap == length(i_time_snaps)
                 cb = colorbar;
-                cb.Ticks = [0 50 round(maxPu)];
+                cb.Ticks = unique([0 50 round(maxPu)]);
                 title(cb, 'Unatt %')
                 set(tl, "YTick", [])
             else
@@ -942,6 +951,7 @@ hl.Box = 'off';
 % tile_loglog = nexttile(rws_l + 1, [3, rws_loglog]);
 tile_loglog = axes('Position', tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.0440] );box on;
 % tile_loglog.Position = tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.0440] 
+% toc
 return;
 %% best fit from FigFitDecayOverlay
 if pCa > 10
