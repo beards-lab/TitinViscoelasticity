@@ -21,7 +21,7 @@ simtype = 'ramp';
 rampSet = [2 4];
 % rampSet = [3]; % nly 100ms
 rampSet = [1 2 3 4];
-rampSet = [4];
+% rampSet = [4];
 
 % pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
 % pCa 10 - load Relaxed, run the PEVK attachment model

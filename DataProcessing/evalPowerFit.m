@@ -1,6 +1,12 @@
-function [cost_c0 rampShift] = evalPowerFit(params, Farr, Tarr, plotResults, rampShift, pCa)
-%%
-if any(params < 0)
+function [cost_c0, rampShift, residuals] = evalPowerFit(params, Farr, Tarr, plotResults, rampShift, pCa)
+%% first three params define offset, exponent and multiplicator. Fourth
+% params = [offset, exponent, multiplicator, fitLimit]
+% fitLimit - limits the fit range. Positive means 0 -- fitLimit, 
+% negative means fitLimit -- 60
+useLogResidual = false;
+useOffset = true;
+
+if any(params(1:3) < 0)
     cost_c0 = Inf;
     rampShift = [];
     return;
@@ -15,7 +21,7 @@ elseif nargin < 5
     pCa = false;
 end
 
-if ~strcmp(plotResults, 'loglogOnly') && pCa
+if length(params) >= 4 || (~strcmp(plotResults, 'loglogOnly') && pCa)
     % limit fit of the data to first 10s
     limitfitrange = true;
 else
@@ -30,7 +36,12 @@ end
 
 a = params(1);
 b = params(2);
-c = params(3);
+
+if useOffset
+    c = params(3);
+else 
+    c = 0;
+end
 
 %% biuld axes
 % if plotResults % anything but false
@@ -46,7 +57,7 @@ if pCa
     xrng1 = [-10 60]; xrng2 = [-2 60]; xrng_add = [0 0]; yrng = [0.8 40];
     xlintick = 0:20:60;xlinticklab = string(floor((xlintick(1):20:xlintick(end))/10)*10);
     % ylogtick = [1 ceil((yrng(1):10:yrng(end))/10)*10];
-    ylogtick = [0:10:50];    ylogtick(1) = 1; yrng = [5 50]
+    ylogtick = [0:10:50];    ylogtick(1) = 1; yrng = [5 50];
 end
 
 % Font size
@@ -116,6 +127,9 @@ rds = [100.0000   10.0000    1.0000    0.1000];
 % figure(2);
 param_a = string();
 for i_rds = [4 3 2 1]
+        if isempty(Tarr{i_rds})
+            continue;
+        end
         %%
         Favg = movmean(Farr{i_rds}, [0 0]) - c;
         % loglog(Tarr{i_rds} + rampShift(i_rds), Favg -c, Color=[cg(5-i_rds, :)], LineWidth=5-i_rds);hold on;
@@ -124,10 +138,26 @@ for i_rds = [4 3 2 1]
         t_s = logspace(log10(rds(i_rds)), log10(Tarr{i_rds}(end)), (Tarr{i_rds}(end) - rds(i_rds))*10);
 
         if limitfitrange
-            % only for 10s to avoid remaining tension build-up
-            t_s = logspace(log10(rds(i_rds)-rampShift(i_rds)), log10(rds(i_rds) + 10-rampShift(i_rds)), 100);
-            % limit 10s up to fit just the tail for pca
-            % t_s = logspace(log10(rds(i_rds)-rampShift(i_rds)), log10(min(Tarr{i_rds}(end), rds(i_rds) + 10 - rampShift(i_rds))), 100);
+
+            if length(params) < 4
+                % only for 10s to avoid remaining tension build-up
+                t_s = logspace(log10(rds(i_rds)-rampShift(i_rds)), log10(rds(i_rds) + 10-rampShift(i_rds)), 100);
+                % limit 10s up to fit just the tail for pca
+                t_s = logspace(log10(rds(i_rds) + 10-rampShift(i_rds)), log10(Tarr{i_rds}(end)), 100);
+                reduced_time_penalty = Tarr{i_rds}(end)/10;
+            elseif params(4) > 0 % only the first part
+                t_s = logspace(log10(rds(i_rds)-rampShift(i_rds)), log10(rds(i_rds) + params(4)-rampShift(i_rds)), 100);
+                reduced_time_penalty = Tarr{i_rds}(end)/t_s(end);
+            elseif params(4) < 0 % only the last part
+                t_s = logspace(log10(rds(i_rds) + (-params(4)) - rampShift(i_rds)), log10(Tarr{i_rds}(end)), 100);
+                reduced_time_penalty = Tarr{i_rds}(end)/(Tarr{i_rds}(end) - t_s(1));
+            elseif params(4) == 0
+                cost_c0 = Inf;
+                rampShift = [];
+                return;
+            end
+        else
+            reduced_time_penalty = 1;
         end
 
         % force interpolation
@@ -153,7 +183,25 @@ for i_rds = [4 3 2 1]
         catch e
             disp(e)
         end        
-        cost_c0 = cost_c0 + goodness.rmse;%/length(t_s);
+        % calc cost in a log way
+        % modelVals = pf(ae.tau, t_s);
+        % dataVals = Fint;
+        
+        % c0 = goodness.rmse;
+        % c0 = sum((pf(ae.tau, t_s) - Fint).^2);
+        residuals{i_rds, 1} = t_s - t_s(1);
+        if useLogResidual
+            residuals{i_rds, 2} = abs(log10(pf(ae.tau, t_s)) - log10(Fint)).^2;
+        else
+            residuals{i_rds, 2} = (pf(ae.tau, t_s) - Fint).^2;
+        end
+        % c0 = sum(abs(log10(pf(ae.tau, t_s)) - log10(Fint)).^2);
+        c0 = sum(residuals{i_rds, 2});
+        if c0 < 0
+            stop = true;
+        end
+
+        cost_c0 = cost_c0 + c0*reduced_time_penalty;
         cc = [cg(5-i_rds, :)]; % current color 
         clw = 4.5-i_rds; % current line width
 
@@ -260,13 +308,16 @@ for i_rds = [4 3 2 1]
         leg_gr = [l_cm(valids) l_f];
         leg_txt = [legends(valids) sprintf('$%0.2f(t - t_r + \\tau_i)^{-%0.2f}$',a,b)];
         reorder = [1 3 5 2 4];
-        leg = legend(leg_gr(reorder), leg_txt(reorder), 'Interpreter','latex', 'FontSize',fs, Location='northwest', NumColumns=2);
+        % leg = legend(leg_gr(reorder), leg_txt(reorder), 'Interpreter','latex', 'FontSize',fs, Location='northwest', NumColumns=2);
     else
         leg_gr = [l_cm(valids) l_fitarr l_f];
         leg_txt = [legends(valids) "Power-law decay area" sprintf('$%0.2f(t - t_r + \\tau_i)^{-%0.2f}$',a,b)];
         reorder = [1 3 5 2 4 6];
-        leg = legend(leg_gr(reorder), leg_txt(reorder), 'Interpreter','latex', 'FontSize',fs, Location='northwest', NumColumns=2);
     end
+    if length(reorder) ~= length(leg_txt) || length(reorder) ~= length(leg_gr)
+        reorder = 1:length(leg_txt);
+    end
+    leg = legend(leg_gr(reorder), leg_txt(reorder), 'Interpreter','latex', 'FontSize',fs, Location='northwest', NumColumns=2);
     leg.ItemTokenSize=[15; 18];
     %adjust position
     if w2 > 0

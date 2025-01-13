@@ -6,42 +6,15 @@ runOptim = false;
 
 %% Baseline
 % Nice fit including pCa4.4 0.1s, predicting rest
-params = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
+% params = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
+% new mava set
+params = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
 modSel = 1:length(params);
-
-tic
-evalCombined(params(modSel), params, modSel, [11 4.4])
-toc
-% modSel = [1:6 7 8 9 14 20 22]
-
-%% save baseline
-m = params;
-evalCombined(m, params, 1:length(mod), [11 4.4])
-f = figure(144)
-exportgraphics(f,sprintf('../Figures/Fig_pCa%g.png', 4.4),'Resolution',150)
-f = figure(210)
-exportgraphics(f,sprintf('../Figures/Fig_pCa%g.png', 11),'Resolution',150)
-
-%% Knockouts - no PEVK attachment
-m = params;
-m(7) = 0;% PEVK attachment
-m(8) = 1e9; % PEVK detachment
-evalCombined(m, params, 1:length(mod), [4.4])
-f = figure(144)
-exportgraphics(f,sprintf('../Figures/FigKnockoutPEVK_pCa%g.png', 4.4),'Resolution',150)
-
-%% Knockouts - less viscosity
-m = params;
-m(14) = 1e-1;% 
-evalCombined(m, params, 1:length(mod), [11])
-f = figure(144)
-exportgraphics(f,sprintf('../Figures/FigKnockoutVisc_pCa%g.png', 4.4),'Resolution',150)
-f = figure(210)
-exportgraphics(f,sprintf('../Figures/FigKnockoutVisc_pCa%g.png', 11),'Resolution',150)
+% load fmisrch_Ca.mat
 
 %% Choose one optimalization or run them one after another
 %% test in GA
-if runOptim
+if false && runOptim
     
     % parpool
     ga_Opts = optimoptions('ga', ...
@@ -66,30 +39,82 @@ if runOptim
     mod(modSel) = 10.^p_OptimGA;
     % use fminserach afterwards
 end
-%% Optimization - linear parameter space
+
+%% optimization - fmins and surrogateopt
 if runOptim
-    options = optimset('Display','iter', 'TolFun', 1e-3, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 500);
-    modSel = [2 3 4 5 6 7 8 9 10 11 12 13]; % selects modifiers to optimize for
+% only for 4.4
     
+    % modSel = [7 8 9]
+    % no Ca set
+    modSel = [1 3 4 5 10 19];
+    pCas = [11]
+    % Ca set
+    modSel = [7 8 9];
+    pCas = [4.4]
+    % All
+    params(22) = NaN;
+    modSel = [2 3 4 5 6 7 8 9 10 11 12 13 23]; % selects modifiers to optimize for
+    pCas = [11 4.4];
+    
+    options = optimset('Display','iter', 'TolFun', 1e-3, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 100);
+
+    % linear fminsrch
     init = params(modSel);
-    evalLin = @(optMods) evalCombined(optMods, params, modSel, [11])
+    evalLin = @(optMods) evalCombined(optMods, params, modSel, pCas)
     x = fminsearch(evalLin, init, options);
     params(modSel) = x;
-end
-%% optim in log param space
-if runOptim
 
-    modSel = [2 3 4 5 6 7 8 9 10 11 12 13]; % selects modifiers to optimize for
-    
+    % log fminsearch
     init = max(-10, log10(params(modSel)));
-    evalLogCombined = @(logMod) evalCombined(10.^logMod, params, modSel, [4.4]);
+    evalLogCombined = @(logMod) evalCombined(10.^logMod, params, modSel, pCas);
     x = fminsearch(evalLogCombined, init, options);
     params(modSel) = 10.^x; 
-    % list params
-    a = [modSel; params(modSel)]; sprintf('%d: %1.3g\n', a(:))
-    % list params for save
-    disp(['params = [' sprintf('%1.3g, ', params(:)) '];'])
+    
+    % linear surrogateopt
+    parpool('local', 10);
+    options = optimoptions('surrogateopt','Display','iter', 'MaxTime', 6*60*60, 'UseParallel',true, 'PlotFcn', 'surrogateoptplot', 'InitialPoints', init', MaxFunctionEvaluations=1500);
+    % lb = T.lb./T.val; ub = T.ub./T.val;
+    lb = 0.01*init, ub = 20*init;
+    evalLin = @(optMods) evalCombined(optMods, params, modSel, [11 4.4])
+    [x,fval,exitflag,output,trials] = surrogateopt(evalLin, lb,ub, options);
+    params(modSel) = x;
+
+    % save surropt_noStiff params x
+    save optres params x
 end
+%%
+evalCombined([], params, [], [11])
+
+%% list params
+% Display modNames with their corresponding values in mod
+for i = 1:length(modNames)
+    % fprintf('%d) %s: %g\n', i, modNames{i}, mod(i));
+    fprintf('%d) %s: %g\n', i, modNames{i}, params(i));
+end
+
+%% list params
+a = [modSel; params(modSel)]; sprintf('%d: %1.3g\n', a(:))
+% list params for save
+disp(['params = [' sprintf('%1.3g, ', params(:)) '];'])
+
+
+%% THATS IT as a default run
+return
+
+%% Knockouts: no PEVK attachment: costs 87
+modSel = [9 22];
+params([7, 8]) = 0;
+pCas = [4.4];
+% load fmisrch_noPEVK
+
+%% KNockouts: no stiffening: costs 
+params(9) = params(1);
+modSel = [7 8 23];
+params(23) = 0;
+% params([7, 8]) = 0;
+pCas = [4.4];
+% load fmisrch_noPEVK
+
 %% Optimize for middle pCa's
 if runOptim
 
@@ -124,6 +149,7 @@ evalCombined(mod5_8, params, modSel, [5.75]);
 evalCombined(mod6, params, modSel, [6]);
 
 %% Compare params for different pCa's
+
 mod = params;
 mod11 = params;
 mod11(modSel) = [1e-6 mod(1)]
@@ -141,7 +167,52 @@ disp(['mod5_5 = [' sprintf('%1.3g, ', mod5_5(modSel)) '];'])
 disp(['mod5_8 = [' sprintf('%1.3g, ', mod5_8(modSel)) '];'])
 disp(['mod6 = [' sprintf('%1.3g, ', mod6(modSel)) '];'])
 
-%%
+%% Run a SA
+
+% init run
+% modSel = 1:numParams 
+% no Ca optim set identified
+% modSel = [1 3 4 5 10 19]
+% starting point for a Ca set
+% modSel = setdiff(1:23, modSel)
+% ca set sensitive
+modSel = [7 8 11 13 14 18]
+% ca set selected
+modSel = [7 8 9];
+
+% Sensitivity Analysis Script for evaCombined
+perturbation = 0.01;      % Perturbation percentage (1%)
+
+% Initialize results
+numParams = length(params);
+baseOutput = evalCombined([], params, [], [4.4]); % Evaluate the function with base parameters
+sensitivity = zeros(1, numParams); % To store sensitivity for each parameter
+
+% Loop over each parameter
+for i = modSel
+    % i_ = modSel(i)
+    % Create a perturbed parameter vector
+    perturbedParams = params;
+    if isnan(perturbedParams(i))
+        continue;
+    end
+    perturbedParams(i) = params(i) * (1 + perturbation);
+    
+    % Evaluate the function with the perturbed parameters
+    perturbedOutput = evalCombined([], perturbedParams, [], [4.4]);
+    
+    % Compute sensitivity as fractional change in output / fractional change in parameter
+    sensitivity(i) = (perturbedOutput - baseOutput) / (params(i) * perturbation);
+    fprintf('Parameter %d: Sensitivity = %f\n', i, sensitivity(i));
+end
+
+% Display sensitivity results
+% for i = 1:numParams
+%     fprintf('Parameter %d: Sensitivity = %f\n', i, sensitivity(i));
+% end
+
+
+%% Functions
 function totalCost = evalCombined(optMods, mod, modSel, pCas)
 
     if nargin < 4
