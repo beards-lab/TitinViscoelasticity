@@ -21,12 +21,6 @@ f.Position = [300 200 7.2*96 7.2*96/aspect];
 load ../data/pca11data.mat
 % Load from averaged simulation input data
 rds = [100, 10, 1, 0.1];
-for i_rd = 1:length(rds)
-    tb = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
-    % tb = readtable(['..\Data\AvgMavaSetpCa4.4_' num2str(rds(i_rd)) 's.csv']);
-    Farr{i_rd} = tb.F;
-    Tarr{i_rd} = tb.Time - tb.Time(1); % start at zero
-end
 
 % linear residuals, offset, c = 125, logC = 4.9
 x = [3.7242    0.2039    4.8357];
@@ -68,42 +62,65 @@ axes(tile_loglog);
 % exportgraphics(f,'../Figures/FigDecayOverlayModelRelaxed.png','Resolution',150)
 % Farr = Force;Tarr = Time;
 %% pCa model
+Farr = {};
+Tarr = {};
+for i_rd = 1:length(rds)
+    % tb = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
+    tb = readtable(['..\Data\AvgMavaSetpCa4.4_' num2str(rds(i_rd)) 's.csv']);
+    Farr{i_rd} = tb.F;
+    Tarr{i_rd} = tb.Time - tb.Time(1); % start at zero
+end
+
+% pcadata = load('..\pca4.4modeldata.mat');
+% Farr = pcadata.Farr;Tarr = pcadata.Tarr;
+
+%% pCa model
 f = figure(4);clf;
 f.Position = [300 200 7.2*96 7.2*96/aspect];
-pcadata = load('..\pca4.4modeldata.mat');
-Farr = pcadata.Farr;Tarr = pcadata.Tarr;
 x = [17.9381    0.2339    4.3359];
 [c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true)
 
 %%
-options = optimset('Display','iter', 'TolFun', 1e-4, 'Algorithm','sqp', 'UseParallel', true, ...
-    'TolX', 0.0001, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
-% init(1:3) = [0 0 0]
-%% fit the no Ca
-x = [4.0516    0.1059    1.6441];
-x = [5.7301    0.0740    0.0000];
-x = [4.4271    0.2121    4.8964]
-% relaxed AVG mava ?
 
-x = [2.8953    0.2768    5.5530];
-% test no offset, c = 0.8358
-%% fit pCa data
+% Ca does not affect parallel stiffness - we use that from teh relaxed
+x0 = 4.84;
 
-% fixed power exponent b
-% init = [x(1) x(3)]
-% init = [x(1) x(2) -10]
-init  = [13.3303    0.4742 5.5530 -10];
+% fit the whole Ca
+% % x = [x0    0.2768    5.5530];
 
-% best tail
-init = [6.9400    0.3137    5.5530   -8.0665];
-% best head
-% init = [13.4557    0.5138    5.5530   36.8098];
+% best all tail: c = 28.1
+% init = [6.3546    0.2157    x0  -12.2928];
 
-pcaFitFunFixB = @(x)evalPowerFit([x(1), x(2), init(3) x(3)], Farr, Tarr, false, [], true);
-x = fminsearch(pcaFitFunFixB, [init(1) init(2) init(4)], options);
-init([1, 2, 4]) = x;
+% best tail when relaxing the x0: c = 23. Optically much worse fit though
+% init = [35.2299    1.2706    7.3737  -12.2928]
+
+% best tail for fast(0.1 and 1)
+% Tarr{1} = {};Farr{1} = {};
+% Tarr{2} = {};Farr{2} = {};
+% init = [10.2511    0.3704    4.8400   -9.7544]
+
+% best tail for slow (10 and 100)
+% Tarr{3} = {};Farr{3} = {};
+% Tarr{4} = {};Farr{4} = {};
+% init = [4.6950    0.1268    4.8400  -15.7143];
+
+% best head does not work. Pretty bad
+% init = [6.4546    0.357    x0  8.2928];
+
+
+rerunFitting = true;
+
+if rerunFitting
+    options = optimset('Display','iter', 'TolFun', 1e-4, 'Algorithm','sqp', 'UseParallel', true, ...
+        'TolX', 0.0001, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
+
+    pcaFitFunFixB = @(x)evalPowerFit([x(1), x(2), x0, x(3)], Farr, Tarr, false, [], true);
+    x = fminsearch(pcaFitFunFixB, [init(1) init(2) init(4)], options);
+    init([1, 2, 4]) = x;
+end
 
 [c rampShift] = evalPowerFit(init, Farr, Tarr, true, [], true);
+c
 %% init([1 3]) = x;
 figure(101); 
 % init = [x(1), init(2), x(2)];

@@ -7,8 +7,11 @@ runOptim = false;
 %% Baseline
 % Nice fit including pCa4.4 0.1s, predicting rest
 % params = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
-% new mava set
+% new mava set - pCa 11
 params = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
+% new mava set - pCa 4.4
+params = [433, 4e+04, 2.4, 8.05, 2.38, 7.92e+06, 0.0142, 0.802, 1.43e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
+
 modSel = 1:length(params);
 % load fmisrch_Ca.mat
 
@@ -46,44 +49,50 @@ if runOptim
     
     % modSel = [7 8 9]
     % no Ca set
-    modSel = [1 3 4 5 10 19];
-    pCas = [11]
-    % Ca set
-    modSel = [7 8 9];
-    pCas = [4.4]
-    % All
-    params(22) = NaN;
-    modSel = [2 3 4 5 6 7 8 9 10 11 12 13 23]; % selects modifiers to optimize for
-    pCas = [11 4.4];
+    % modSel = [1 3 4 5 10 19];
+    % pCas = [11]
     
-    options = optimset('Display','iter', 'TolFun', 1e-3, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 100);
+    % Ca set
+    modSel = [3 4 5 6 7 8 9];
+    pCas = [4.4]
+    
+    % All
+    % params(22) = NaN;
+    % modSel = [2 3 4 5 6 7 8 9 10 11 12 13 23]; % selects modifiers to optimize for
+    % pCas = [11 4.4];
+    
+    % options = optimset('Display','iter', 'TolFun', 1e-3, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 100);
 
     % linear fminsrch
-    init = params(modSel);
-    evalLin = @(optMods) evalCombined(optMods, params, modSel, pCas)
-    x = fminsearch(evalLin, init, options);
-    params(modSel) = x;
+    % init = params(modSel);
+    % evalLin = @(optMods) evalCombined(optMods, params, modSel, pCas)
+    % x = fminsearch(evalLin, init, options);
+    % params(modSel) = x;
+    % comment = "Optimizing only max Ca, ramps 0.1 to 10, PEVK bidning and both, unfolding and elastic parameters.";
+    % save optres4.4All params modSel comment
 
-    % log fminsearch
-    init = max(-10, log10(params(modSel)));
-    evalLogCombined = @(logMod) evalCombined(10.^logMod, params, modSel, pCas);
-    x = fminsearch(evalLogCombined, init, options);
-    params(modSel) = 10.^x; 
+    % % log fminsearch
+    % init = max(-10, log10(params(modSel)));
+    % evalLogCombined = @(logMod) evalCombined(10.^logMod, params, modSel, pCas);
+    % x = fminsearch(evalLogCombined, init, options);
+    % params(modSel) = 10.^x; 
     
-    % linear surrogateopt
-    parpool('local', 10);
+    % % linear surrogateopt
+    % parpool('local', 10);
+    init = params(modSel);
     options = optimoptions('surrogateopt','Display','iter', 'MaxTime', 6*60*60, 'UseParallel',true, 'PlotFcn', 'surrogateoptplot', 'InitialPoints', init', MaxFunctionEvaluations=1500);
     % lb = T.lb./T.val; ub = T.ub./T.val;
     lb = 0.01*init, ub = 20*init;
-    evalLin = @(optMods) evalCombined(optMods, params, modSel, [11 4.4])
+    evalLin = @(optMods) evalCombined(optMods, params, modSel, [4.4])
     [x,fval,exitflag,output,trials] = surrogateopt(evalLin, lb,ub, options);
     params(modSel) = x;
+    comment = "Optimizing with surrogateopt only max Ca, ramps 0.1 to 10, PEVK bidning and both, unfolding and elastic parameters. Can we get any better?";
+    save optresSurro4.4All params modSel comment
 
-    % save surropt_noStiff params x
-    save optres params x
+
 end
 %%
-evalCombined([], params, [], [11])
+evalCombined([], params, [], [4.4])
 
 %% list params
 % Display modNames with their corresponding values in mod

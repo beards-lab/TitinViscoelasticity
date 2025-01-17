@@ -1,6 +1,6 @@
 function [cost_c0 rampShift] = evalPowerFit(params, Farr, Tarr, plotResults, rampShift, pCa)
 %%
-if any(params < 0)
+if any(params(1:3) < 0)
     cost_c0 = Inf;
     rampShift = [];
     return;
@@ -46,7 +46,7 @@ if pCa
     xrng1 = [-10 60]; xrng2 = [-2 60]; xrng_add = [0 0]; yrng = [0.8 40];
     xlintick = 0:20:60;xlinticklab = string(floor((xlintick(1):20:xlintick(end))/10)*10);
     % ylogtick = [1 ceil((yrng(1):10:yrng(end))/10)*10];
-    ylogtick = [0:10:50];    ylogtick(1) = 1; yrng = [5 50]
+    ylogtick = [0:10:50];    ylogtick(1) = 1; yrng = [5 50];
 end
 
 % Font size

@@ -18,9 +18,9 @@ simtype = 'ramp';
 % simtype = 'rampbeat';
 
 % rampSet = [1];
-rampSet = [2 4];
+rampSet = [2 3 4];
 % rampSet = [3]; % nly 100ms
-rampSet = [1 2 3 4];
+% rampSet = [1 2 3 4];
 % rampSet = [4];
 
 % pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
@@ -832,7 +832,7 @@ end
 Ep = nansum(((PeakData(:, 2) - PeakModel(:))/max(Ftot_int{j})).^2);
 % discarding peak fit for high Ca's
 if pCa < 10
-    Ep = 0;
+    % Ep = 0;
 end
 
 cost = Ep*100 + sum([En{1:end}], 'all');
@@ -897,7 +897,7 @@ for j = max(rampSet):-1:1
     end
     hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
     set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
-    hm{j} = semilogx(Time{j},Force{j},'-', 'linewidth',2, 'Color', 'k'); 
+    hm{j} = semilogx(Time{j},Force{j},'|-', 'linewidth',2, 'Color', 'k'); 
     hph{j} = plot(nan, nan, 'x',Color=[1 1 1]); % just a placeholder
     % set(h.Cap, 'EdgeColorType', 'truecoloralpha', 'EdgeColorData', [h.Cap.EdgeColorData(1:3); 255*alpha])
     ym = max([ym Force{j}, datatables{j}.F']);
