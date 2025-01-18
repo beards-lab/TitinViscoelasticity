@@ -1,5 +1,12 @@
 % Runs the passive model - could be run separately in a clear environment
 % or by OptimizeCOmbined.m
+% we have two datasets possible
+% datasetname = 'pnbonly';
+% colors = autumn(5);
+
+datasetname = 'pnbmava';
+colors = gray(5);
+
 
 if ~exist('mod', 'var')
     % Nice fit including pCa4.4 0.1s, predicting rest
@@ -21,7 +28,7 @@ simtype = 'ramp';
 rampSet = [2 3 4];
 % rampSet = [3]; % nly 100ms
 % rampSet = [1 2 3 4];
-% rampSet = [4];
+rampSet = [4];
 
 % pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
 % pCa 10 - load Relaxed, run the PEVK attachment model
@@ -50,14 +57,19 @@ for i_rd = 1:length(rds)
   %   datatable.Properties.VariableNames = {'Time'  'ML'  'F'  'SL'};
   %   datatables{i_rd} = datatable;
   % elseif isnan(pCa)
-      % newest format of experiments    
-    datatables{i_rd} = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
+      % newest format of experiments   
+      if datasetname == "pnbonly"
+          datatables{i_rd} = readtable(['..\Data\AvgRelaxed_' num2str(rds(i_rd)) 's.csv']);
+      elseif datasetname == "pnbmava"
+          datatables{i_rd} = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
+      end
+
   else
-    if exist(['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv'], "file")
+      if datasetname == "pnbonly"
+        datatables{i_rd} = readtable(['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv']);
+      elseif datasetname == "pnbmava"
         datatables{i_rd} = readtable(['..\Data\AvgMavaSetpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv']);
-    else
-        datatables{i_rd} = [];
-    end
+      end
   end
   % else
   %   % new format for pCa experiments
@@ -177,7 +189,7 @@ if drawFig1
     % sx = s(1):0.1:s(end);
     sx = s;
     % Fp = interp1(s, Fp(:, :), sx);
-    f = figure(3); clf;
+    f = figure(3); 
     set(gcf, 'Position', [500  300  7.2*96 3.5*96])
     gc = axes('Position', [0.1, 0.2, 0.35, 0.7]);
     pl1 = plot(sx, Fp(:, 1), 'k-', 'linewidth', 2); hold on;
@@ -866,7 +878,7 @@ aspect = 2;
 
 % f.Position = [300 200 7.2*96 7.2*96/aspect];
 % colors = lines(max(rampSet)+1); colors(1:end-1, :) = colors(2:end, :);
-colors = gray(5);
+
 % colors(1:end-1, :) = colors(2:end, :);
 fs = 12;
 % tl = tiledlayout(3, 4, 'TileSpacing', 'compact');
@@ -897,7 +909,7 @@ for j = max(rampSet):-1:1
     end
     hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
     set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
-    hm{j} = semilogx(Time{j},Force{j},'|-', 'linewidth',2, 'Color', 'k'); 
+    hm{j} = semilogx(Time{j},Force{j},'|-', 'linewidth',2, 'Color', colors(1, :)); 
     hph{j} = plot(nan, nan, 'x',Color=[1 1 1]); % just a placeholder
     % set(h.Cap, 'EdgeColorType', 'truecoloralpha', 'EdgeColorData', [h.Cap.EdgeColorData(1:3); 255*alpha])
     ym = max([ym Force{j}, datatables{j}.F']);

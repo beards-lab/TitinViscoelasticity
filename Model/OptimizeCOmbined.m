@@ -91,10 +91,23 @@ if runOptim
 
 
 end
-%%
-evalCombined([], params, [], [4.4])
+% %% old - need to change that in RunCombinedModel head
+% params = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
+% evalCombined([], params, [], [4.4])
+% savefig('PnbOnlypCa4.4DataFit.fig')
+%% new - check the RunCombinedModel head!
+params = [433, 4e+04, 2.4, 8.05, 2.38, 7.92e+06, 0.0142, 0.802, 1.43e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
+evalCombined([], params, [], [4.4]);
+% savefig('PnbMavapCa4.4DataFit.fig')
+%% experiment
+% params(7) = 0.8;
+% params(23) = 1000;
+params = [433, 4e+04, 2.4, 8.05, 2.38, 7.92e+06, 0.0142, 0.802, 1.43e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
 
-%% list params
+evalCombined(params, params, 1:length(params), [4.4])
+
+
+%% list named params
 % Display modNames with their corresponding values in mod
 for i = 1:length(modNames)
     % fprintf('%d) %s: %g\n', i, modNames{i}, mod(i));
