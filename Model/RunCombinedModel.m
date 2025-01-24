@@ -7,6 +7,8 @@
 datasetname = 'pnbmava';
 colors = gray(5);
 
+pCa_noEffect = 11;
+
 
 if ~exist('mod', 'var')
     % Nice fit including pCa4.4 0.1s, predicting rest
@@ -52,25 +54,26 @@ rds = fliplr([0.1, 1, 10, 100]);
 % rds = fliplr([0.1, 10]);
 for i_rd = 1:length(rds)
   if isinf(pCa) || pCa >= 10
-  %   % hack - the no-Ca noPNB experiments had higher ramps
-  %   datatable = readtable(['..\Data\bakers_passiveStretch_' num2str(rds(i_rd)*1000) 'ms.csv']);
-  %   datatable.Properties.VariableNames = {'Time'  'ML'  'F'  'SL'};
-  %   datatables{i_rd} = datatable;
-  % elseif isnan(pCa)
-      % newest format of experiments   
       if datasetname == "pnbonly"
-          datatables{i_rd} = readtable(['..\Data\AvgRelaxed_' num2str(rds(i_rd)) 's.csv']);
+          filename = ['..\Data\AvgRelaxed_' num2str(rds(i_rd)) 's.csv'];
       elseif datasetname == "pnbmava"
-          datatables{i_rd} = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
+          filename = ['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv'];
       end
 
   else
       if datasetname == "pnbonly"
-        datatables{i_rd} = readtable(['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv']);
+        filename = ['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv'];
       elseif datasetname == "pnbmava"
-        datatables{i_rd} = readtable(['..\Data\AvgMavaSetpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv']);
+        filename = sprintf('..\\Data\\AvgMava_pCa%0.1f_%gs.csv', pCa, rds(i_rd));     
       end
   end
+
+  if exist([filename], "file")
+      datatables{i_rd} = readtable(filename);
+  else
+      datatables{i_rd} = [];
+  end
+  
   % else
   %   % new format for pCa experiments
   %   datatables{i_rd} = readtable(['..\Data\PassiveCa_2\bakers_passiveStretch_pCa' num2str(pCa) '_' num2str(1000*rds(i_rd)) 'ms.csv']);
@@ -140,7 +143,7 @@ alphaU = mod(6);         % chain unfolding rate constant
 % Fss = 3.2470*mod(10); % Parallel steady state force
 % Fss = 4.89;
 Fss = mod(10);
-if pCa < 10
+if pCa < 21
     kp   = mod(9);      % proximal chain force constantkS   = g0(2)*14122;        % distal chain force constant
     kA   = mod(7);
     kD   = mod(8); % PEVK detachment rate
@@ -274,7 +277,7 @@ pu = zeros(Nx,1)*PU;
 pa = zeros(Nx,1)*PA;
 pu(1,1) = 1/ds; 
 
-if pCa >= 11 
+if pCa >= pCa_noEffect
     % no Ca effect assumed
     x0 = reshape(pu,[(Ng+1)*Nx,1]);
 else
@@ -292,7 +295,7 @@ Time = cell(1, 5);
 Length = cell(1, 5); 
 for j = rampSet
   if isempty(datatables{j})
-      fprintf('Skipping pCa %0.2f %0.0fs dataset\n', pCa, rds(j))
+      % fprintf('Skipping pCa %0.2f %0.0fs dataset\n', pCa, rds(j))
       continue;
   end
   % tic
@@ -379,7 +382,7 @@ for j = rampSet
   pu = zeros(Nx,1)*PU;
   pa = zeros(Nx,1)*PA;
   pu(1,1) = 1/ds; 
-  if pCa >= 11
+  if pCa >= pCa_noEffect
     x0 = reshape(pu,[(Ng+1)*Nx,1]);
   else
     x0 = reshape([pu, pa],[2*(Ng+1)*Nx,1]);
@@ -456,7 +459,7 @@ maxPu = 0; maxPa = 0;
     xi = x(i,:);
     Length{j}(i) = xi(end);
     pu = reshape( xi(1:(Ng+1)*Nx), [Nx,Ng+1]);
-    if pCa >= 11
+    if pCa >= pCa_noEffect
         pa = 0;
     else
         pa = reshape( xi((Ng+1)*Nx+1:2*(Ng+1)*Nx), [Nx,Ng+1]);
