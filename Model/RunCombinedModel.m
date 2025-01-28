@@ -21,16 +21,14 @@ if ~exist('drawPlots', 'var')
     drawPlots = true;
 end
 
+if ~exist('rampSet', 'var')
+    rampSet = [1 2 3 4];
+end
+
 load SoHot.mat;
 % simtype = 'sin';
 simtype = 'ramp';
 % simtype = 'rampbeat';
-
-% rampSet = [1];
-rampSet = [2 3 4];
-% rampSet = [3]; % nly 100ms
-% rampSet = [1 2 3 4];
-rampSet = [4];
 
 % pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
 % pCa 10 - load Relaxed, run the PEVK attachment model
