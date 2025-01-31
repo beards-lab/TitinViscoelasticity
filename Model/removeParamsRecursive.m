@@ -6,7 +6,7 @@ mod6_2 = [433, 4e+04, 2.02, 7.26, 2.62, 2.37e+06, 4.47e-05, 4.32, 476, 5.19, 0, 
 mod11 = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
 % adjusted to pCa format
 mod11_ = mod11;mod11_(9) = mod11(1);
-resultOptim = load(pCasResultOptim).resultOptim;
+resultOptim = load('pCasResultOptim').resultOptim;
 
 %% optim the fit
 % isolateRunCombinedModel([], [], mod4, 4.4, true)
@@ -76,12 +76,33 @@ for i = 1:length(combinations)
         i, sprintf('%d ', combinations{i}.modSel), lengths(sortedIndices(i)), costs(sortedIndices(i)));
 end
 
-% isolateRunCombinedModel(bestOptParams, bestModSel, params, 6.2)
+selectedCombo = combinations{16};
+figure(2);clf;
+isolateRunCombinedModel(selectedCombo.params, selectedCombo.modSel, mod4, 11, true)
+
+%% Test a combination of parameters optim from pCa 4.4 to 11
+selectedCombo = combinations{16};
+
+% get rid of the attached ones
+bool_exclModSel = ~ismember(selectedCombo.modSel, [7 8], 'legacy');
+params = selectedCombo.params(bool_exclModSel);
+exclModSel = selectedCombo.modSel(bool_exclModSel);
+
+% test
+mod11_ = mod4;
+isolateRunCombinedModel(params, exclModSel, mod4, 11, true)
+
+% optim
+evalLin = @(curmod) isolateRunCombinedModel(curmod, exclModSel, mod4, [11]);
+[x c] = fminsearch(evalLin, params, options);
+mod11_(exclModSel) = x;
+% run with all ramps
+isolateRunCombinedModel([], [], mod11_, 11, true, [2 3 4])
 
 % Output results
-fprintf('Optimal parameter set: %s\n', mat2str(bestModSel));
-fprintf('Optimized parameters: %s\n', mat2str(bestOptParams));
-fprintf('Achieved cost: %.3f\n', bestCost);
+% fprintf('Optimal parameter set: %s\n', mat2str(bestModSel));
+% fprintf('Optimized parameters: %s\n', mat2str(bestOptParams));
+% fprintf('Achieved cost: %.3f\n', bestCost);
 %% Test and list valid combos
 maxValidCost = 0.4;
 params = mod4;
@@ -170,33 +191,171 @@ end
 
 
 end
+%% Try monotonous param optim - unfinished
+selectedCombo = combinations{16};
+
+
+modSel = [9];
+% parameters which decrease with increasing pCa
+modSelDown = [];
+% parameters which increase with decreasing pCa
+modSelUp = [9];
+
+modSet = [mod4;mod4;mod4;mod4;mod4;mod4];
+pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+
+
+% Optimization options
+opts = optimset('Display','none', 'TolFun', 1e-2, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
+% Optimization options with progress plot
+opts = optimset('Display', 'iter', ...  % Show iteration details in the command window
+                'TolFun', 1e-6, ...
+                'Algorithm', 'sqp', ...
+                'TolX', 0.00001, ...
+                'TolCon', 1e-3, ...     % Tolerance for constraints (if applicable)
+                'PlotFcns', @optimplotfval, ...  % Plot the function value at each iteration
+                'MaxIter', 150);
+
+
+for i_pca = 2:length(pcax)
+    
+    params = modSet(i_pca, :);
+    prev_params = modSet(i_pca-1, :);
+
+    if pcax(i_pcax) == 11
+        % get rid of the attached ones for pCa 11
+        bool_exclModSel = ~ismember(selectedCombo.modSel, [7 8], 'legacy');
+        params = selectedCombo.params(bool_exclModSel);
+        modSel = selectedCombo.modSel(bool_exclModSel);
+    end
+
+
+    LB = zeros(1, length(params));
+    LB(modSelUp) = prev_params(modSelUp);
+
+    UB = inf(1, length(params));
+    UB(modSelDown) = prev_params(modSelDown);
+    
+    evalLin = @(curmod) isolateRunCombinedModel(mod4(modSel).*curmod, modSel, mod4,  pcax(i_pca));
+    [x c] = fmincon(evalLin,params(modSel)./mod4(modSel),[],[],[],[],LB(modSel),UB(modSel), [], opts);
+    % x = fminsearch(evalLin, [1], opts);
+    x
+    modSet(i_pca, modSel) = x.*mod4(modSel);
+end
+
+%% Try to optimize param per param
+
+modSet = [mod4;mod4;mod4;mod4;mod4;mod11];
+pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+
+% first round of optim
+% modSet = [mod4;mod4;mod11];
+% pcax = [4.4, 5.5, 11];
+pcaSel = [1 2]
+
+% Second round of optim - we already have those
+disp(['params = [' sprintf('%1.3g, ', modSet(1, :)) '];'])
+disp(['params = [' sprintf('%1.3g, ', modSet(2, :)) '];'])
+disp(['params = [' sprintf('%1.3g, ', modSet(3, :)) '];'])
+mod4 = [433, 4e+04, 2.37, 5.78, 2.74, 8.71e+05, 0.00564, 0.383, 4.31e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
+mod5_5 = [433, 4e+04, 2.37, 6.27, 2.74, 3e+06, 0.00567, 0.383, 3.78e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
+mod11 = [433, 4e+04, 2.37, 8.38, 2.55, 4.3e+06, 0.0171, 0.695, 442, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
+% init for second round - now we use matrix of all to prevent
+% non-monotonic, but subselct only pca to optim
+modSet = [mod4;mod5_5;mod5_5;mod5_5;mod5_5;mod11];
+pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+%% get the other bound right
+pcaSel = [5 6];
+% tweak pca11
+modSet(6, [7 8]) = [NaN, NaN];
+% fix pca4 attachment
+modSet(1, 7) = NaN;
+modSet(5, 7) = 5e-3;
+%% round 3 - get the middle right
+pcaSel = [2 3 4];
+
+%%
+pcaSel = [1];
+selectedCombo = combinations{16};
+modSel = selectedCombo.modSel;
+% modSel = [1]
+optMods = modSet(pcaSel, modSel);
+optModsInLine = reshape(optMods, [], 1);
+% isolateRunCombinedModelAllpCas(optMods, modSel, modSet, pcax, pcaSel)
+%
+opts = optimset('Display','none', 'TolFun', 1e-2, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 500);
+
+for ijk = 1:4
+    evalLin = @(curmod) isolateRunCombinedModelAllpCas(curmod, modSel, modSet, pcax, pcaSel)
+    optModsInLine = fminsearch(evalLin, optModsInLine, opts);
+end
+
+optMods = reshape(optModsInLine, length(pcaSel), length(modSel));
+% modSet = [mod4;mod4;mod4;mod4;mod4;mod4];
+% pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+modSet(pcaSel, modSel) = optMods;
+% modSet(end, :) = mod11_
+
+% save optimModSetAll modSet 
+%% test fit
+% pcaSel = [5 6];
+isolateRunCombinedModelAllpCas(optModsInLine, modSel, modSet, pcax, pcaSel, true)
+%% test just monotonicity
+isolateRunCombinedModelAllpCas([], modSel, modSet, pcax, [])
+%% Test modSet
+
+for i_pca = 1:size(modSet, 1)
+    %%
+    % i_pca = 5;
+    % modSet(5, 7) = 1e-3;
+    % modSet(5, 4) = modSet(6, 4);
+    % modSet(1, 7) = modSet(2, 7) ;
+    % modSet(6, 5) = modSet(5, 5) ;
+    params = modSet(i_pca, :);
+    figure(1000+round(pcax(i_pca)*10));clf;
+    isolateRunCombinedModel([], [], params, pcax(i_pca), true, [4])
+end
+
 %% plot interesting parameter values into one plot
 figure(1000);clf;
-selectedParams = [3 4 5 7 8 9];
-tiledlayout(3,2);
+% selectedParams = [3 4 5 6 7 8 9];
+selectedParams = modSel;
+% selectedParams = 1:23;
+% tiledlayout(2,2);
+tiledlayout('flow');
 for i_selpar = 1:length(selectedParams)
     nexttile(i_selpar);hold on;
-    for ires = [2 3 5]
-        modSet = [mod4;resultOptim{ires}.mod5_5;resultOptim{ires}.mod5_8;resultOptim{ires}.mod6;mod6_2;resultOptim{ires}.mod11];
-        pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];        
+    % for ires = [2 3 5]
+        % modSet = [mod4;resultOptim{ires}.mod5_5;resultOptim{ires}.mod5_8;resultOptim{ires}.mod6;mod6_2;resultOptim{ires}.mod11];
+        % pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];        
         plot(-pcax, modSet(:, selectedParams(i_selpar)), 'x:', LineWidth=3);
-    end
+    % end
     title(modNames(selectedParams(i_selpar)));
 end
     % legend(modNames())
-        
-%% Plot all pramps
-pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];        
+%% Show the resulting matrix
+% for i = 1:size(modSet,1)
+%     fprintf('%10.4g ', modSet(i,:));  % Prints each row with 4 significant figures
+%     fprintf('\n');  % New line after each row
+% end
+  
+ms = [...
+       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+    ];
 
-% for ires = 1:length(resultOptim)
-ires = 4;
-for i_pcax = 1:length(pcax)
-    figure(10000+pcax(i_pcax)*100);clf;  
-    modSet = [mod4;resultOptim{ires}.mod5_5;resultOptim{ires}.mod5_8;resultOptim{ires}.mod6;mod6_2;resultOptim{ires}.mod11];            
-    c = isolateRunCombinedModel(modSet(i_pcax, resultOptim{ires}.modSel),resultOptim{ires}.modSel,mod6_2, pcax(i_pcax), true);
-    title(c)
-end    
-
+%% fit with a func
+figure(80085);clf;
+fitHill(modSet, modSel(3), pcax)
+tiledlayout('flow');
+for i_ms = 1:length(modSel)
+    nexttile();hold on;
+    fitHill(modSet, modSel(i_ms), pcax)
+end
 
 %% Functions below
 function [bestModSel, bestParams, bestCost, combinations] = findOptimalParameters(modSel, params, optimizedParams, costThreshold, combinations)
@@ -294,17 +453,145 @@ function [bestModSel, bestParams, bestCost, combinations] = findOptimalParameter
     % save ohwow;
 end
 
+function cost = isolateRunCombinedModelAllpCas(optModsInLine, modSel, modSet, pCas, pcaSel, drawPlots)
+
+pcax = pCas(pcaSel);
+optMods = reshape(optModsInLine, length(pcax), length(modSel));
+% modSet = [mod4;mod4;mod4;mod4;mod4;mod4];
+% pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+
+modSet(pcaSel, modSel) = optMods;
+
+if nargin < 6
+    drawPlots = false;
+end
+    rampSet = [4];
+total_cost = 0;
+    for i_pca = 1:length(pcax)
+        mod = modSet(i_pca, :);
+        mod(modSel) = optMods(i_pca, :);
+        pCa = pcax(i_pca);
+        RunCombinedModel;
+        total_cost(i_pca) = cost;
+    end
+% enforce monotonicity over whole modSet
+lambda = 1000;
+
+% c_mono = lambda * min(...
+%     sum(max(0, optMods(1:end-1) - optMods(2:end))), ... % Non-decreasing penalty
+%     sum(max(0, optMods(2:end) - optMods(1:end-1)))); % non increasing penalty
+% 
+% Compute differences between consecutive elements for each column
+differences = diff(modSet./modSet(1, :));
+differences = differences(:, modSel);
+
+% Compute non-decreasing penalties: positive values imply non-monotonicity
+non_decreasing_penalties = sum(max(0, -differences));
+
+% Compute non-increasing penalties: positive values imply non-monotonicity
+non_increasing_penalties = sum(max(0, differences));
+
+% Compute the minimum penalties for each column
+column_penalties = min(non_decreasing_penalties, non_increasing_penalties);
+
+% Total penalty (sum of penalties for all columns, scaled by lambda)
+c_mono = lambda * sum(column_penalties);
+
+    cost = sum(total_cost) + c_mono; 
+end
 
 
-function cost = isolateRunCombinedModel(optMods, modSel, params, pCa, drawPlots)
+function cost = isolateRunCombinedModel(optMods, modSel, params, pCa, drawPlots, rampSet)
 % just to isolate the script, so the variables can't intervene
 % figure(pCa*10);    
 if nargin < 5
     drawPlots = false;
-end
     rampSet = [4];
+elseif nargin < 6 
+    rampSet = [4];
+end
     mod = params;
     mod(modSel) = optMods;
     % cost = sum((optMods/10 - 2).^2);
     RunCombinedModel
+end
+
+
+function fitHill(modSet, modSel, pcax)
+cutXaxis = true;
+% Example data points (replace with actual values)
+x_data = pcax;
+y_data = modSet(:, modSel)';  % Dependent variable
+
+filter = ~isnan(y_data);
+% y_data = y_data(filter);
+% x_data = x_data(filter);
+y_data(~filter) = 0;
+
+%% Choose initial parameter guesses [A, K, n]
+A0 = max(y_data);     % Approximate max value
+A_0 = min(y_data);
+K0 = 6; %median(x_data);  % Midpoint estimate
+n0 = 100;               % Initial Hill coefficient
+
+params0 = [A0, K0, n0, A_0];
+
+% Define Hill function models
+hill_rising = @(p, x) (p(1) * x.^p(3)) ./ (p(2).^p(3) + x.^p(3)) + A_0;  % Rising Hill function
+hill_decreasing = @(p, x) p(1) ./ (1 + (x./p(2)).^p(3) + A_0);           % Decreasing Hill function
+
+% Perform curve fitting using nonlinear least squares
+options = optimset('Display', 'iter', 'TolFun', 1e-6);
+params_rising = lsqcurvefit(hill_rising, params0, x_data, y_data, [], [], options);
+params_decreasing = lsqcurvefit(hill_decreasing, params0, x_data, y_data, [], [], options);
+
+% Plot results
+if cutXaxis
+    x_data(end) = 8;
+end
+
+% Generate fine x-values for plotting
+x_fine = linspace(min(x_data)*0.95, max(x_data)*1.05, 100);
+
+% Evaluate fitted models
+y_fit_rising = hill_rising(params_rising, x_fine);
+y_fit_decreasing = hill_decreasing(params_decreasing, x_fine);
+
+% Compute residuals
+residual_rising = norm(y_data - hill_rising(params_rising, x_data));
+residual_decreasing = norm(y_data - hill_decreasing(params_decreasing, x_data));
+
+% Determine best fit model
+if residual_rising < residual_decreasing
+    best_fit = 'Rising Hill Function';
+    best_params = params_rising;
+    y_best_fit = y_fit_rising;
+else
+    best_fit = 'Decreasing Hill Function';
+    best_params = params_decreasing;
+    y_best_fit = y_fit_decreasing;
+end
+
+scatter(x_data, y_data, 100, 'ro', 'filled', 'DisplayName', 'Data Points');
+% plot(x_fine, y_fit_rising, 'b-', 'LineWidth', 2, 'DisplayName', 'Hill (Rising)');
+% plot(x_fine, y_fit_decreasing, 'g--', 'LineWidth', 2, 'DisplayName', 'Hill (Decreasing)');
+plot(x_fine, y_best_fit, 'k-', 'LineWidth', 3, 'DisplayName', ['Best Fit: ', best_fit]);
+
+if cutXaxis
+    % Set custom x-ticks with a break
+    xticks([4 5 6 7 8]);  % Include 7 and 11 for a break
+    xticklabels({'-4', '-5', '-6', '...', '11'}); % Add '...' as break
+end
+%%
+legend;
+xlabel('x');
+ylabel('y');
+title(['Hill Function Fit - Best Model: ', best_fit]);
+
+% Display best-fit parameters
+disp(['Best Fit Model: ', best_fit]);
+disp(['A = ', num2str(best_params(1))]);
+disp(['K = ', num2str(best_params(2))]);
+disp(['n = ', num2str(best_params(3))]);
+
 end
