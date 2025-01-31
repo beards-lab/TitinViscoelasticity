@@ -8,7 +8,9 @@ datasetname = 'pnbmava';
 colors = gray(5);
 
 pCa_noEffect = 11;
-
+if ~exist('plotInSeparateFigure', 'var')
+    plotInSeparateFigure = true;
+end
 
 if ~exist('mod', 'var')
     % Nice fit including pCa4.4 0.1s, predicting rest
@@ -869,40 +871,43 @@ end
 
 try
 % tic
-set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
-cf = clf;
-
-aspect = 2;
-% normal size of 2-col figure on page is 7.2 inches
-% matlab's pixel is 1/96 of an inch
-% f.Position = [300 200 7.2*96 7.2*96/aspect];
-
-% f.Position = [300 200 7.2*96 7.2*96/aspect];
-% colors = lines(max(rampSet)+1); colors(1:end-1, :) = colors(2:end, :);
-
-% colors(1:end-1, :) = colors(2:end, :);
-fs = 12;
-% tl = tiledlayout(3, 4, 'TileSpacing', 'compact');
-rws_s = 4;rws_l = rws_s*4;rws_loglog = 6;
-tl = tiledlayout(3, rws_loglog+rws_l, "Padding","compact", "TileSpacing","compact");
-tile_semilogx = nexttile(1, [2, rws_l]);
-tile_loglog = nexttile(rws_l + 1, [3, rws_loglog]);
-tile_r(1) = nexttile((rws_loglog+rws_l)*2 + 1, [1 rws_s]);
-tile_r(2) = nexttile((rws_loglog+rws_l)*2 + 1 + rws_s, [1 rws_s]);
-tile_r(3) = nexttile((rws_loglog+rws_l)*2 + 1 + 2*rws_s, [1 rws_s]);
-tile_r(4) = nexttile((rws_loglog+rws_l)*2 + 1 + 3*rws_s, [1 rws_s]);
-tile_positions = [tile_semilogx.Position;tile_loglog.Position;...
-    tile_r(1).Position;tile_r(2).Position;tile_r(3).Position;tile_r(4).Position];
-clf;
-
-reportCosts = false;
-if reportCosts 
-    title(tl, sprintf('pCa %g costs %g', pCa, round(cost, 3)));    
+if plotInSeparateFigure
+    set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
+    cf = clf;
+    
+    aspect = 2;
+    % normal size of 2-col figure on page is 7.2 inches
+    % matlab's pixel is 1/96 of an inch
+    % f.Position = [300 200 7.2*96 7.2*96/aspect];
+    
+    % f.Position = [300 200 7.2*96 7.2*96/aspect];
+    % colors = lines(max(rampSet)+1); colors(1:end-1, :) = colors(2:end, :);
+    
+    % colors(1:end-1, :) = colors(2:end, :);
+    fs = 12;
+    % tl = tiledlayout(3, 4, 'TileSpacing', 'compact');
+    rws_s = 4;rws_l = rws_s*4;rws_loglog = 6;
+    tl = tiledlayout(3, rws_loglog+rws_l, "Padding","compact", "TileSpacing","compact");
+    tile_semilogx = nexttile(1, [2, rws_l]);
+    tile_loglog = nexttile(rws_l + 1, [3, rws_loglog]);
+    tile_r(1) = nexttile((rws_loglog+rws_l)*2 + 1, [1 rws_s]);
+    tile_r(2) = nexttile((rws_loglog+rws_l)*2 + 1 + rws_s, [1 rws_s]);
+    tile_r(3) = nexttile((rws_loglog+rws_l)*2 + 1 + 2*rws_s, [1 rws_s]);
+    tile_r(4) = nexttile((rws_loglog+rws_l)*2 + 1 + 3*rws_s, [1 rws_s]);
+    tile_positions = [tile_semilogx.Position;tile_loglog.Position;...
+        tile_r(1).Position;tile_r(2).Position;tile_r(3).Position;tile_r(4).Position];
+    clf;
+    
+    reportCosts = false;
+    if reportCosts 
+        title(tl, sprintf('pCa %g costs %g', pCa, round(cost, 3)));    
+    end
+    % tile_semilogx = nexttile(1, [2, rws_l]);hold on;
+    % tile_semilogx = subplot(3, rws_l + rws_loglog, );hold on;
+    tile_semilogx = axes('Position', tile_positions(1, :));hold on;
+else
+    tile_semilogx = gca();
 end
-% tile_semilogx = nexttile(1, [2, rws_l]);hold on;
-% tile_semilogx = subplot(3, rws_l + rws_loglog, );hold on;
-tile_semilogx = axes('Position', tile_positions(1, :));hold on;
-
 ym = 0;
 for j = max(rampSet):-1:1
     if isempty(Force{j})

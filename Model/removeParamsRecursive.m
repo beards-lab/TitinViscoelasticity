@@ -191,57 +191,6 @@ end
 
 
 end
-%% Try monotonous param optim - unfinished
-selectedCombo = combinations{16};
-
-
-modSel = [9];
-% parameters which decrease with increasing pCa
-modSelDown = [];
-% parameters which increase with decreasing pCa
-modSelUp = [9];
-
-modSet = [mod4;mod4;mod4;mod4;mod4;mod4];
-pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
-
-
-% Optimization options
-opts = optimset('Display','none', 'TolFun', 1e-2, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
-% Optimization options with progress plot
-opts = optimset('Display', 'iter', ...  % Show iteration details in the command window
-                'TolFun', 1e-6, ...
-                'Algorithm', 'sqp', ...
-                'TolX', 0.00001, ...
-                'TolCon', 1e-3, ...     % Tolerance for constraints (if applicable)
-                'PlotFcns', @optimplotfval, ...  % Plot the function value at each iteration
-                'MaxIter', 150);
-
-
-for i_pca = 2:length(pcax)
-    
-    params = modSet(i_pca, :);
-    prev_params = modSet(i_pca-1, :);
-
-    if pcax(i_pcax) == 11
-        % get rid of the attached ones for pCa 11
-        bool_exclModSel = ~ismember(selectedCombo.modSel, [7 8], 'legacy');
-        params = selectedCombo.params(bool_exclModSel);
-        modSel = selectedCombo.modSel(bool_exclModSel);
-    end
-
-
-    LB = zeros(1, length(params));
-    LB(modSelUp) = prev_params(modSelUp);
-
-    UB = inf(1, length(params));
-    UB(modSelDown) = prev_params(modSelDown);
-    
-    evalLin = @(curmod) isolateRunCombinedModel(mod4(modSel).*curmod, modSel, mod4,  pcax(i_pca));
-    [x c] = fmincon(evalLin,params(modSel)./mod4(modSel),[],[],[],[],LB(modSel),UB(modSel), [], opts);
-    % x = fminsearch(evalLin, [1], opts);
-    x
-    modSet(i_pca, modSel) = x.*mod4(modSel);
-end
 
 %% Try to optimize param per param
 
@@ -301,8 +250,10 @@ modSet(pcaSel, modSel) = optMods;
 % pcaSel = [5 6];
 isolateRunCombinedModelAllpCas(optModsInLine, modSel, modSet, pcax, pcaSel, true)
 %% test just monotonicity
+
 isolateRunCombinedModelAllpCas([], modSel, modSet, pcax, [])
 %% Test modSet
+figure(80085); clf;
 
 for i_pca = 1:size(modSet, 1)
     %%
@@ -312,8 +263,9 @@ for i_pca = 1:size(modSet, 1)
     % modSet(1, 7) = modSet(2, 7) ;
     % modSet(6, 5) = modSet(5, 5) ;
     params = modSet(i_pca, :);
-    figure(1000+round(pcax(i_pca)*10));clf;
-    isolateRunCombinedModel([], [], params, pcax(i_pca), true, [4])
+    nexttile;hold on;
+    isolateRunCombinedModel([], [], params, pcax(i_pca), true, [1 2 3 4])
+    title(sprintf('pCa %g'), pcax(i_pca));
 end
 
 %% plot interesting parameter values into one plot
@@ -348,13 +300,14 @@ ms = [...
        433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
     ];
 
-%% fit with a func
-figure(80085);clf;
+%% fit params a func
+figure(8008135);clf;
 fitHill(modSet, modSel(3), pcax)
 tiledlayout('flow');
 for i_ms = 1:length(modSel)
     nexttile();hold on;
-    fitHill(modSet, modSel(i_ms), pcax)
+    fitHill(modSet, modSel(i_ms), pcax);
+    title(sprintf('Fitting param %s', modNames{modSel(i_ms)}));
 end
 
 %% Functions below
@@ -513,7 +466,8 @@ end
     mod = params;
     mod(modSel) = optMods;
     % cost = sum((optMods/10 - 2).^2);
-    RunCombinedModel
+    plotInSeparateFigure = false;
+    RunCombinedModel;
 end
 
 
@@ -583,9 +537,9 @@ if cutXaxis
     xticklabels({'-4', '-5', '-6', '...', '11'}); % Add '...' as break
 end
 %%
-legend;
-xlabel('x');
-ylabel('y');
+legend(gca(), 'off');
+xlabel('pCa');
+ylabel('Param value');
 title(['Hill Function Fit - Best Model: ', best_fit]);
 
 % Display best-fit parameters
