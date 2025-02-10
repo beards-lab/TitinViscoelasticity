@@ -4,6 +4,14 @@
 % datasetname = 'pnbonly';
 % colors = autumn(5);
 
+drawAllStates = false;
+plotDetailedPlots = false;
+drawFig1 = false;
+exportRun = false;
+rerunFitting = false;
+% plotInSeparateFigure = false;
+
+
 datasetname = 'pnbmava';
 colors = gray(5);
 
@@ -12,25 +20,50 @@ if ~exist('plotInSeparateFigure', 'var')
     plotInSeparateFigure = true;
 end
 
-if ~exist('mod', 'var')
-    % Nice fit including pCa4.4 0.1s, predicting rest
-    mod = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
-end
 if ~exist('pCa', 'var')
     pCa = 11;
+end
+
+if ~exist('mod', 'var')
+    % Nice fit of everything    
+    ms = [...
+       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+    ];
+   pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+   i_pcax = find(pCa == pcax);
+   mod = ms(i_pcax, :);
 end
 if ~exist('drawPlots', 'var')
     drawPlots = true;
 end
 
 if ~exist('rampSet', 'var')
-    rampSet = [1 2 3 4];
+    rampSet = [2 3 4];
 end
 
 load SoHot.mat;
+%     colors = [
+%         1, 1, 1; % White for zero
+%         0, 0.5, 1; % Blue (complementary to orange)
+%         0, 0, 1; % Dark blue
+%         0, 0, 0; % Black for max
+%     ];
+%     % Interpolate the colors
+%     SoCool = interp1(linspace(0, 1, size(colors, 1)), colors, linspace(0, 1, 256));
+% save SoCool SoCool;
+load SoCool.mat;
+
+
 % simtype = 'sin';
-simtype = 'ramp';
 % simtype = 'rampbeat';
+if ~exist('simtype', 'var')
+    simtype = 'ramp';
+end
 
 % pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
 % pCa 10 - load Relaxed, run the PEVK attachment model
@@ -43,9 +76,6 @@ if any(mod < 0)
     cost = inf;
     return;
 end
-drawAllStates = false;
-drawFig1 = false;
-exportRun = false;
 
 figInd = get(groot,'CurrentFigure'); % replace figure(indFig) later without stealing the focus
 
@@ -331,7 +361,7 @@ for j = rampSet
   
   if strcmp(simtype, 'ramp')
       %% normal
-      times = [-100, 0;0 Tend_ramp;Tend_ramp Tend_ramp + 10000];
+      times = [-100, 0;0 Tend_ramp;Tend_ramp Tend_ramp + 200];
       % times = [-100, 0;0 Tend_ramp];
       velocities = {0 V 0};
       L0 = 0;
@@ -517,7 +547,7 @@ maxPu = 0; maxPa = 0;
             % line([s(1) s(end)], [Ng, Ng], [h h], Color='black', linewidth=lw)
             % imagesc(s, 0:Ng, pu'*ds*100);
             % surf(s, 0:Ng, Fp')
-            colormap(SoHot);
+            colormap(tl, SoHot);
             
             % xlim([0, s(end)]);
             % shading(gca, 'interp')
@@ -530,7 +560,8 @@ maxPu = 0; maxPa = 0;
             elseif i_snap == length(i_time_snaps)
                 cb = colorbar;
                 cb.Ticks = unique([0 50 round(maxPu)]);
-                title(cb, 'Unatt %')
+                title(cb, 'Probability of unattached $p_u$ (\%)',Interpreter='latex');
+                cb.Title.HorizontalAlignment = 'right';
                 set(tl, "YTick", [])
             else
                 set(tl, "YTick", [])
@@ -563,7 +594,8 @@ maxPu = 0; maxPa = 0;
 
                 % surf(s, 0:Ng, Fp')
                 % colormap(1-gray);
-                colormap(SoHot);
+                % colormap(SoHot);
+                colormap(tl, SoCool);
                 % xlim([0, s(end)]);
                 % shading(gca, 'interp')
                 % view(90, -90); 
@@ -575,7 +607,8 @@ maxPu = 0; maxPa = 0;
                 elseif i_snap == length(i_time_snaps)
                     cb = colorbar;
                     cb.Ticks = [0 round(maxPa)];
-                    title(cb, 'Att %')
+                    title(cb, 'Probability of attached $p_a$ (\%)',Interpreter='latex')
+                    cb.Title.HorizontalAlignment = 'right';
                     set(tl, "YTick", [])
                 else
                     set(tl, "YTick", [])
@@ -759,6 +792,8 @@ maxPu = 0; maxPa = 0;
   %% Plot sinusoidal outcome
     aspect = 2;
     figure(900 + j*10 + round(pCa));clf;    tiledlayout(2,2, TileSpacing="compact");
+    % figure(900935);
+    % clf; tiledlayout('flow');
     set(gcf, 'Position', [500  300  7.2*96 7.2*96/aspect])
     rng = Time{j} < 20;
     t = Time{j}(rng)';
@@ -770,23 +805,36 @@ maxPu = 0; maxPa = 0;
     x_ = @(t) t - floor(t/Tc)*Tc;
     lw = 1
 
-    nexttile;
+    % if exist('tl1', 'var')
+        nexttile(1);hold on;
+    % else
+        tl1 = nexttile;
+    % end
     plot(t, x, 'k', linewidth = lw);
     % plot(t, x, t, y);legend('Length', 'Force');
     xlabel('$t$ (s)', Interpreter='latex');    ylabel('$L$ ($\mu$m)', Interpreter='latex');
     ylim([0.95, 1.2])
 
-    nexttile(2, [2 1]);
+    % if exist('tl2', 'var')
+        % nexttile(2);hold on;
+    % else
+        tl2 = nexttile(2, [2 1]);
+    % end
+
     surface([x;x],[y;y],[z;z],[col;col],...
             'facecol','no',...
             'edgecol','interp',...
             'linew',lw);
-    clim([0 50 100])
+    % clim([0 50 100])
     colormap(turbo);    
     ylabel('$\Theta$ (kPa)', Interpreter='latex');     xlabel('$L$ ($\mu$m)', Interpreter='latex');
-    cb = colorbar;  cb. title(cb, 't (s)');
+    cb = colorbar;  title(cb, 't (s)');
 
-    nexttile;
+    % if exist('tl3', 'var')
+        % nexttile(3);
+    % else    
+        tl3 = nexttile;
+    % end
     % plot(x_(t), x, x_(t), y);legend('Length', 'Force');
     plot(t, y, 'k', linewidth = lw);
     xlabel('$t$ (s)', Interpreter='latex');
@@ -865,7 +913,7 @@ if exportRun
     % else
     %     save relaxgraphingenv.mat
     % end
-    % save(sprintf('..\\pca%gmodeldata.mat', pCa), 'Tarr', 'Farr')
+    save(sprintf('..\\pca%gmodeldata.mat', pCa), 'Tarr', 'Farr')
     % save('..\pca11modeldataDoubleStates.mat', 'Tarr', 'Farr')
 end
 
@@ -907,6 +955,7 @@ if plotInSeparateFigure
     tile_semilogx = axes('Position', tile_positions(1, :));hold on;
 else
     tile_semilogx = gca();
+    hold on;
 end
 ym = 0;
 for j = max(rampSet):-1:1
@@ -950,6 +999,10 @@ hl = legend([hd{1} hm{1}], ...
 hl.ItemTokenSize = [30, 20];
 hl.Box = 'off';
 
+if ~plotDetailedPlots || ~plotInSeparateFigure
+    return;
+end
+
 % title('Model fit', Interpreter='latex')
 
     % 'MData Ramp-up 0.1 s', 'MData Ramp-up 0.1 s', 'MData Ramp-up 0.1 s', 'MData Ramp-up 0.1 s'...
@@ -970,14 +1023,39 @@ hl.Box = 'off';
 tile_loglog = axes('Position', tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.0440] );box on;
 % tile_loglog.Position = tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.0440] 
 % toc
-return;
+% return;
 %% best fit from FigFitDecayOverlay
+ options = optimset('Display','iter', 'TolFun', 1e-4, 'Algorithm','sqp', 'UseParallel', true, ...
+        'TolX', 0.0001, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
+
 if pCa > 10
-    x = [4.7976    0.2392    4.8212];
+    % x = [4.7976    0.2392    4.8212];
+    x = [3.7242    0.2039    4.8357]; % data
+    x = [3.5021    0.2378    5.0506]; % model
+    if rerunFitting
+        init = x;
+        fitfunOpt = @(x) evalPowerFit(x, Farr, Tarr, false);
+        x = fminsearch(fitfunOpt, init, options)
+    end
+
     [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
 else
-    x = [17.9381    0.2339    4.3359];
-    [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], true);
+    % best overall fit
+    % x = [15.1141    0.4346    4.5143];
+    Phi_inf = 5.0506; % assumed from relaxed
+    x = [6.4651    0.2383  Phi_inf -24.2505];
+    % PEVK KO fit
+    x = [6.1750    0.2272    5.0506  -39.1079];
+    if rerunFitting
+        init = x([1 2 4]);
+        addpath ../DataProcessing
+        fitfunOpt = @(opt) evalPowerFit([opt(1) opt(2) x(3) opt(3)], Farr, Tarr, false);
+        opt = fminsearch(fitfunOpt, init, options)
+        x([1 2 4]) = opt;
+    end
+    % Tarr{1} = Time{1};
+    
+    cla;[c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true);
 end
 
 

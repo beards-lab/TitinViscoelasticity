@@ -48,16 +48,20 @@ end
 % set width adn height and offsets
 w = 0.255; h = 0.85; x0 = 0.08; y0 = 0.11; gap = 0.003; centerShift = 0.06;
 % data ranges - pca11
-xrng1 = [-10 19]; xrng2 = [-2 27];xrng_add = [55 65]; yrng = [0.75 21];
+% abs of range should be the same, just shifted
+xrng1 = [-10 19]; xrng2 = [-2 27]; xrng_add = [55 65]; 
+yrng1 = [0 15];
+xrng_ll = [5e-3 1e4];
+yrng_ll = [0.75 14];
 % ylogtick = [1e0 1e1];
 xlintick = 0:10:20;xlinticklab  = [string(floor((xlintick(1):10:xlintick(end))/5)*5) ""];
-ylogtick = [1 ceil((yrng(1):5:yrng(end))/5)*5];
+ylogtick = [1 ceil((yrng_ll(1):5:yrng_ll(end))/5)*5];
 % data ranges - pca4
 if pCa
-    xrng1 = [-10 60]; xrng2 = [-2 60]; xrng_add = [0 0]; yrng = [0.8 40];
+    xrng1 = [-10 60]; xrng2 = [-2 60]; xrng_add = [0 0]; yrng_ll = [0.8 40];
     xlintick = 0:20:60;xlinticklab = string(floor((xlintick(1):20:xlintick(end))/10)*10);
     % ylogtick = [1 ceil((yrng(1):10:yrng(end))/10)*10];
-    ylogtick = [0:10:50];    ylogtick(1) = 1; yrng = [5 50];
+    ylogtick = [0:10:50];    ylogtick(1) = 1; yrng_ll = [2 50];
 end
 
 % Font size
@@ -72,13 +76,13 @@ if plotResults == true
     % left
     % axes left main
     a_lm = axes(fug, 'Position', [x0 y0 w1 h], 'XLim',xrng1,'XTick',floor((xrng1(1):20:xrng1(end))/5)*5, ... 
-        'YLim',[0 yrng(2)], 'FontSize',fs, 'YScale','linear', 'TickLabelInterpreter','latex'); 
+        'YLim',yrng1, 'FontSize',fs, 'YScale','linear', 'TickLabelInterpreter','latex'); 
     ylabel("$\Theta$ (kPa)", 'Interpreter','latex'); xlabel("$t - t_r$ (s)", 'Interpreter', 'latex')
     hold on; box on; % keep the settings from overwritting
     % axes left adjacent
     if w2 > 0
         a_la = axes(fug, 'Position', [x0+w1+gap y0 w2 h], 'Xlim', xrng_add,'XTick',floor((xrng_add(1):10:xrng_add(end))/5)*5, 'YTick', [],... 
-            'YLim',[0 yrng(2)], 'FontSize',fs, 'YScale','linear', 'TickLabelInterpreter','latex'); 
+            'YLim',yrng1, 'FontSize',fs, 'YScale','linear', 'TickLabelInterpreter','latex'); 
         hold on;box on;
     else
         % invalid, lets make it outside valid range
@@ -88,14 +92,14 @@ if plotResults == true
     % center
     [w1, w2] = getW1W2(w, gap, xrng2, xrng_add);
     a_cm = axes('Position', [0.5-w/2 + centerShift y0 w1 h], 'XLim',xrng2,'XTick', xlintick, 'XTickLabel',xlinticklab, ... 
-        'YLim',yrng, 'FontSize',fs, 'YScale','log', 'TickLabelInterpreter','latex',...
+        'YLim',yrng_ll, 'FontSize',fs, 'YScale','log', 'TickLabelInterpreter','latex',...
         YTick=ylogtick); 
     ylabel("$\Theta-\Theta_\infty$ (kPa)", 'Interpreter','latex');xlabel("$t - t_r + \tau_i$ (s)", 'Interpreter', 'latex');
     hold on; box on;
     
     if w2 > 0
         a_ca = axes('Position', [0.5-w/2 + w1 + gap + centerShift y0 w2 h], 'Xlim', xrng_add,'XTick',floor((xrng_add(1):10:xrng_add(end))/5)*5, 'YTick', [],... 
-        'YLim',yrng, 'FontSize',fs, 'YScale','log', 'TickLabelInterpreter','latex');
+        'YLim',yrng_ll, 'FontSize',fs, 'YScale','log', 'TickLabelInterpreter','latex');
         hold on; box on;
     else
         % invalid, lets make it outside valid range
@@ -112,8 +116,8 @@ elseif strcmp(plotResults, 'loglogOnly')
 end
 
 if exist('a_r', 'var')
-    set(a_r,'XLim',[1e-2 1e4], ... 
-        'YLim',yrng, 'FontSize',fs, 'XScale', 'log','YScale','log', 'TickLabelInterpreter','latex',...
+    set(a_r,'XLim',xrng_ll, ... 
+        'YLim',yrng_ll, 'FontSize',fs, 'XScale', 'log','YScale','log', 'TickLabelInterpreter','latex',...
         YTick=ylogtick, XTick=[1e-1 1e1 1e3]);     
     xlabel("$t - t_r + \tau_i$ (s)", 'Interpreter', 'latex');
     hold on; box on;
@@ -244,7 +248,7 @@ for i_rds = [4 3 2 1]
     
     % fit area
     if limitfitrange
-        l_fitarr = fill(max(1e-2, [t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds)), [0.1 0.1 60 60], [0.1 0.1 0.1], 'FaceAlpha',0.14, EdgeColor='none');
+        l_fitarr = fill(max(1e-2, [t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds)), [0.1 0.1 60 60], [0.1 0.1 0.1]*5, 'FaceAlpha',0.14, EdgeColor='none');
     end
 
     pf_v = pf(t_ext);
@@ -290,7 +294,7 @@ for i_rds = [4 3 2 1]
     % fit area - only pCa
     if limitfitrange
         axes(a_cm)
-        l_fitarr = fill([t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds), [0.1 0.1 60 60], [0.1 0.1 0.1], 'FaceAlpha',0.14, EdgeColor='none');
+        l_fitarr = fill([t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds), [0.1 0.1 60 60], [0.1 0.1 0.1]*2, 'FaceAlpha',0.14, EdgeColor='none');
     end
     
     % show the fit in central too

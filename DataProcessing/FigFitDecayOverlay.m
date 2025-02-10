@@ -83,10 +83,10 @@ x = [17.9381    0.2339    4.3359];
 %%
 
 % Ca does not affect parallel stiffness - we use that from teh relaxed
-x0 = 4.84;
+x0 = 3.7242;
 
 % fit the whole Ca
-% % x = [x0    0.2768    5.5530];
+init = [x0    0.2768    5.5530];
 
 % best all tail: c = 28.1
 % init = [6.3546    0.2157    x0  -12.2928];

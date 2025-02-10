@@ -1,24 +1,38 @@
 % processes the relaxed data
 % clear -except dataset;
 
-% using only the final dataset
-dataset{1} = load('Data/DataStruct20230919.mat');
-dataset{2} = load('Data/DataStruct20230927.mat');
-dataset{3} = load('Data/DataStruct20230928.mat');
-dataset{4} = load('Data/DataStruct20231027.mat');
-dataset{5} = load('Data/DataStruct20231102.mat');
-dataset{6} = load('Data/DataStruct20231107.mat');
-isMale = [1, 1, 0, 0, 1, 0];
+% % using only the final dataset
+% dataset{1} = load('DataStruct20230919.mat');
+% dataset{2} = load('DataStruct20230927.mat');
+% dataset{3} = load('DataStruct20230928.mat');
+% dataset{4} = load('DataStruct20231027.mat');
+% dataset{5} = load('DataStruct20231102.mat');
+% dataset{6} = load('DataStruct20231107.mat');
+% isMale = [1, 1, 0, 0, 1, 0];
+
+% using only the MAVA dataset
+dataset{1} = load('DataStruct20241010.mat');
+dataset{2} = load('DataStruct20241121.mat');
+dataset{3} = load('DataStruct20241212.mat');
+dataset{4} = load('DataStruct20241217.mat');
+dataset{5} = load('DataStruct20241219.mat');
+dataset{6} = load('DataStruct20241220.mat');
+isMale = [1, 0, 0, 0, 1, 1];
+leg_names = ["20241010 M","20241121 F","20241212 F","20241217 F","20241219 M","20241220 M"];
+%% Get Fmax
+AverageRamps_findFmax;
+
 %% Figure representative ramps
-ts = [dataset{6}.dsc{1, 1}.datatable.t; ...
-    dataset{6}.dsc{1, 1}.datatable.t(end) + dataset{6}.dsc{2, 1}.datatable.t ;...
-    dataset{6}.dsc{1, 1}.datatable.t(end) + dataset{6}.dsc{2, 1}.datatable.t(end)  + dataset{6}.dsc{3, 1}.datatable.t];
-Ls = [dataset{6}.dsc{1, 1}.datatable.L; ...
-    dataset{6}.dsc{2, 1}.datatable.L ;...
-    dataset{6}.dsc{3, 1}.datatable.L];
-Fs = [dataset{6}.dsc{1, 1}.datatable.F; ...
-    dataset{6}.dsc{2, 1}.datatable.F ;...
-    dataset{6}.dsc{3, 1}.datatable.F];
+i_dtst = 1;
+ts = [dataset{i_dtst}.dsc{1, 1}.datatable.t; ...
+    dataset{i_dtst}.dsc{1, 1}.datatable.t(end) + dataset{i_dtst}.dsc{2, 1}.datatable.t ;...
+    dataset{i_dtst}.dsc{1, 1}.datatable.t(end) + dataset{i_dtst}.dsc{2, 1}.datatable.t(end)  + dataset{i_dtst}.dsc{3, 1}.datatable.t];
+Ls = [dataset{i_dtst}.dsc{1, 1}.datatable.L; ...
+    dataset{i_dtst}.dsc{2, 1}.datatable.L ;...
+    dataset{i_dtst}.dsc{3, 1}.datatable.L];
+Fs = [dataset{i_dtst}.dsc{1, 1}.datatable.F; ...
+    dataset{i_dtst}.dsc{2, 1}.datatable.F ;...
+    dataset{i_dtst}.dsc{3, 1}.datatable.F];
 
 
 ts = ts(1:189864); Ls = Ls(1:189864); Fs = Fs(1:189864);
@@ -30,14 +44,14 @@ aspect = 3;
 % matlab's pixel is 1/96 of an inch
 f.Position = [300 200 7.2*96 7.2*96/aspect];
 yl1 = [0.75 1.2];
-yl2 = [-2.5 20];
+yl2 = [-2.5 15];
 gc = axes('Position', [0.1 0.2 0.39 0.75], 'Box','on', 'BoxStyle','full');
 
 % PNB area
 to = 2905; % time offset panel A
 % time offset panel A - relaxed fast to slow area
-to = 898.62;
-plot(ts-to, Ls, 'k--'); ylim(yl1);
+to = 906.85;
+plot(ts - to, Ls, 'k--'); ylim(yl1);
 ylabel('Muscle length ($L/L_0$)', 'Interpreter','latex')
 yyaxis right; plot(ts-to, Fs, 'k-', LineWidth=2);
 % PNB area
@@ -60,13 +74,15 @@ gc.XTick = [0 200 400 600 800];
 
 gc = axes('Position', [0.51 0.2 0.39 0.75], 'Box','on', 'BoxStyle','full');
 
-plot(ts-to + 0.1, Ls, 'k--');ylim(yl1);
+% co = -2.75;
+co = 0
+plot(ts-to +co, Ls, 'k--');ylim(yl1);
 % ylabel('Muscle length ($L/L_0$)', 'Interpreter','latex')
-yyaxis right; plot(ts-to + 0.1, Fs, 'k-', LineWidth=2);
+yyaxis right; plot(ts-to + co, Fs, 'k-', LineWidth=2);
 % PNB area
 % xlim([0, 795]);ylim([-5 15]);
 % fast to slow area
-xlim([-0.05, 0.25]);ylim(yl2);
+xlim([-0.05, 0.5]);ylim(yl2);
 
 leg = legend('ML ($L/L_0$)', '$\Theta$ (kPa)', 'Interpreter','latex', 'FontSize',12, NumColumns=1, Location='southeast');
 leg.Position = leg.Position + [0 0.07 0 0];
@@ -78,14 +94,14 @@ gc.YAxis(2).Color = [0 0 0];
 % gc.YAxis(1).Visible = "off";
 gc.YAxis(1).TickLabel = [];
 % gc.Position = gc.Position + [0.05 0 0 0];
-gc.XTick = [0 0.1 0.2];
+gc.XTick = [0 0.25 0.5];
 
-exportgraphics(f,'Figures/RepreRamps.png','Resolution',150)
+% exportgraphics(f,'../Figures/RepreRamps.png','Resolution',150)
 
 %% cell for each ramp
-% ramp durations
+% ramp durations - indexes the _relaxed_
 rds = [100, 10, 1, 0.1];
-dsName = 'AvgRelaxed';
+dsName = 'AvgRelaxedMAVASet';
 
 % Only final dataset with the new protocol
 relaxed{1} = [1, 1, 9;2, 1, 6;3, 1, 6;4,1,9;5, 1, 9;6, 1, 9];
@@ -93,7 +109,7 @@ relaxed{2} = [1, 1, 8;2, 1, 7;3, 1, 7;4,1,8;5, 1, 8;6, 1, 8];
 relaxed{3} = [1, 1, 7;2, 1, 8;3, 1, 8;4,1,7;5, 1, 7;6, 1, 7];
 relaxed{4} = [1, 1, 6;2, 1, 9;3, 1, 9;4,1,6;5, 1, 6;6, 1, 6];
 
-peaks = relaxed;
+% peaks = relaxed;
 
 % Only with decay 60s+ - use for identifying the decay
 relaxed{1} = [2, 1, 6;3, 1, 6;4, 1, 9;5,1,9;6, 1, 9];
@@ -107,6 +123,12 @@ relaxed{4} = [2, 1, 9;3, 1, 9;4, 1, 6;5,1,6;6, 1, 6];
 % relaxed{3} = [1, 1, 4;2, 1, 4;2, 1, 7;3, 1, 8;4, 1, 8;5,1,7];
 % relaxed{4} = [1, 1, 5;2, 1, 5;2, 1, 6;3, 1, 9;4, 1, 9;5,1,6];
 
+% PNB and MAVA datasets
+% relaxed{i_rds} = [i_dataset, i_condition, i_ramp]
+relaxed{4} = [1, 1, 6;2, 1, 6;3, 1, 6;4, 1, 6;5, 1, 6;6, 1, 6;];
+relaxed{3} = [1, 1, 7;2, 1, 7;3, 1, 7;4, 1, 7;5, 1, 7;6, 1, 7;];
+relaxed{2} = [1, 1, 8;2, 1, 8;3, 1, 8;4, 1, 8;5, 1, 8;6, 1, 8;];
+relaxed{1} = [1, 1, 9;2, 1, 9;3, 1, 9;4, 1, 9;5, 1, 9;6, 1, 9;];
 
 % %%
 % dtst = dataset{2}.dsc;
@@ -151,7 +173,7 @@ for i_rds = 1:length(rds)
         % base rebase not base
         base_rel = 1;
         % base on absolute peak
-        base_rel = max(rmp.F);
+        % base_rel = max(rmp.F);
         % base on steady state
         % base_rel = rmp.F(end);
         % base on max relaxed peak
@@ -295,8 +317,9 @@ save('pca11data.mat', "Farr", "Tarr");
 peaks11 = peaks;
 %% peak sum up - run BEFORE AverageRampsCa
 peaks = peaks11;
+peaks = peaks_norm;
 aspect = 2;
-f = figure(3);f.Position = [300 200 7.2*96 7.2*96/aspect];clf;
+f = figure(4);f.Position = [300 200 7.2*96 7.2*96/aspect];clf;
 
 gc = axes('Position', [0.1 0.1 0.39 0.8], 'Box','on', 'BoxStyle','full');
 % gc = axes('Position', [0.6 0.1 0.39 0.8], 'Box','on', 'BoxStyle','full', 'Color','r');

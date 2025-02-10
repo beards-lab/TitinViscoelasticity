@@ -1,59 +1,37 @@
-% processes the Ca data, expects peaks from normal
-% clearvars -except dataset;
+% processes the Ca data, expects dataset, peaks, relaxed{rds} and leg_names from AverageRamps
+
+% norm_opt = "none";
+norm_opt = "Fmax";
+
+% clearvars -except dataset peaks leg_names;
 
 % 
-% dataset{1} = load('DataStruct20230518_renamed.mat');
-dataset{1} = load('DataStruct20230919.mat');
-dataset{2} = load('DataStruct20230927.mat');
-dataset{3} = load('DataStruct20230928.mat');
-dataset{4} = load('DataStruct20231027.mat');
-dataset{5} = load('DataStruct20231102.mat');
-dataset{6} = load('DataStruct20231107.mat');
-%% Get fmaxes - for each dataset there is a Fmax
-% index: dataset, 
-% measurement, sequence;
-figure(1);clf;hold on;
-fmax_pointers = [8, 1;2 1;2, 1;2, 1;2, 1;2,1];
-for i = 1:size(dataset, 2)
-    if fmax_pointers(i, 1) == 0
-        % no fmax measured
-        dataset_maxF(i) = NaN;
-        continue;
-    end
-    dtst = dataset{i}.dsc{fmax_pointers(i, 1), fmax_pointers(i, 2)};
-    rmp = dtst.datatable;
-    % subplot(122);hold on;
-    % plot(rmp.t, rmp.L);
-    % subplot(121);hold on;
-    pfm(i) = plot(rmp.t, rmp.F);
+% % dataset{1} = load('DataStruct20230518_renamed.mat');
+% dataset{1} = load('DataStruct20230919.mat');
+% dataset{2} = load('DataStruct20230927.mat');
+% dataset{3} = load('DataStruct20230928.mat');
+% dataset{4} = load('DataStruct20231027.mat');
+% dataset{5} = load('DataStruct20231102.mat');
+% dataset{6} = load('DataStruct20231107.mat');
+%% Get Fmax
+AverageRamps_findFmax;
 
-    %  the pCa starts about halfway the dataset
-    i_start = find(rmp.t > 100, 1, 'first');
-    i_firstSteps = find(rmp.L(i_start:end) > 1.001, 1, 'first') - 5 + i_start;
-    % rmp.t([i_start, i_firstSteps])
-
-    % plot(rmp.t(i_start:i_firstSteps), rmp.F(i_start:i_firstSteps), 'x')
-    [maxF i_max] = max(rmp.F(i_start:i_firstSteps));
-    dataset_maxF(i) = maxF;
-    plot(rmp.t(i_max+i_start), maxF, 'rx', LineWidth=4, MarkerSize=12)
-end
-legend(pfm, '20230919 M','20230927 M','20230928 F','20231027 F','20231102 M','20231107 F');
 %% Get the ss F of the slowest active ramp
-ss_pointers = [2, 2;3,7;3,7;3,7;3,7;3,7];
-dataset_ssF = [];
-clf;hold on;
-for i = 1:size(dataset, 2)
-    if fmax_pointers(i, 1) == 0
-        % no fmax measured
-        dataset_ssF(i) = NaN;
-        continue;
-    end
-    dttbl = dataset{i}.dsc{ss_pointers(i, 1), ss_pointers(i, 2)}.datatable;
-    i_ss = find(dttbl.L > max(dttbl.L)*0.999, 40, 'last') - 10;
-    dataset_ssF(i) = mean(dttbl.F(i_ss));
-    pl(i) = plot(dttbl.t, dttbl.F); plot(dttbl.t(i_ss), dttbl.F(i_ss), '|');
-end
-legend(pl, '20230919 M','20230927 M','20230928 F','20231027 F','20231102 M','20231107 F');
+% ss_pointers = [2, 2;3,7;3,7;3,7;3,7;3,7];
+% dataset_ssF = [];
+% clf;hold on;
+% for i = 1:size(dataset, 2)
+%     if fmax_pointers(i, 1) == 0
+%         % no fmax measured
+%         dataset_ssF(i) = NaN;
+%         continue;
+%     end
+%     dttbl = dataset{i}.dsc{ss_pointers(i, 1), ss_pointers(i, 2)}.datatable;
+%     i_ss = find(dttbl.L > max(dttbl.L)*0.999, 40, 'last') - 10;
+%     dataset_ssF(i) = mean(dttbl.F(i_ss));
+%     pl(i) = plot(dttbl.t, dttbl.F); plot(dttbl.t(i_ss), dttbl.F(i_ss), '|');
+% end
+% legend(pl, leg_names);
 %% cell for each ramp
 % ramp durations
 rds = [100, 10, 1, 0.1];
@@ -62,52 +40,52 @@ rds = [100, 10, 1, 0.1];
 % only final dataset
 pCa = 4.4;
 pCa = 5.5;
-% pCa = 5.75;
-% pCa = 6;
-% pCa = 6.25;
+pCa = 5.75;
+pCa = 6;
+pCa = 6.25;
 limit60sPlus = true;
+dsName = sprintf('AvgMava_pCa%0.1f', pCa);
 
 switch pCa
     case 4.4
-        pCaData{1} = [1, 2, 2;2, 3, 7;3, 3, 7;4,3, 7;5, 3, 7;6, 3, 7];
-        pCaData{2} = [1, 2, 3;2, 3, 8;3, 3, 8;4,3, 8;5, 3, 8;6, 3, 8];
-        pCaData{3} = [1, 2, 4;2, 3, 9;3, 3, 9;4,3, 9;5, 3, 9;6, 3, 9];
-        pCaData{4} = [1, 2, 5;2, 3,10;3, 3,10;4,3,10;5, 3,10;6, 3,10];
+        pCaData{1} = [1, 3, 7;2, 3, 7;3, 3, 7;4,3, 7;5, 3, 7;6, 3, 7];
+        pCaData{2} = [1, 3, 8;2, 3, 8;3, 3, 8;4,3, 8;5, 3, 8;6, 3, 8];
+        pCaData{3} = [1, 3, 9;2, 3, 9;3, 3, 9;4,3, 9;5, 3, 9;6, 3, 9];
+        pCaData{4} = [1, 3, 10;2, 3,10;3, 3,10;4,3,10;5, 3,10;6, 3,10];
         % indexes of active PNB 300s hold datasets
-        i_pca100ms_hold = [2 5; 3 10; 3 10;3 11; 3 11; 3 11];    
-        dsName = 'AvgpCa4.4';
+        i_pca100ms_hold = [3 10; 3 10; 3 10;3 10; 3 10; 3 10];    
     case 5.5
         %% 5.5 - only 100ms in latter experiments
         pCaData{1} = [];pCaData{2} = [];pCaData{3} = [];
-        pCaData{4} = [1,3,5;2,3,11;3,3,11;4,3,12;5,3,12;6,3,12];
-        i_pca100ms_hold = [3 5; 3 11; 3 11;3 12; 3 12; 3 12];
-        dsName = 'AvgpCa5.5';
+        pCaData{4} = [1,3,12;2,3,12;3,3,12;4,3,12;5,3,12;6,3,12];
+        % i_pca100ms_hold = [3 5; 3 11; 3 11;3 12; 3 12; 3 12];
     case 5.75
         %% 5.75 - only 100ms in latter experiments
         pCaData{1} = [];pCaData{2} = [];pCaData{3} = [];
-        pCaData{4} = [1,4,5;2,3,12;3,3,12;4,3,13;5,3,13;6,3,13];
-        i_pca100ms_hold = [4 5; 3 12; 3 12;3 13; 3 13; 3 13];
-        dsName = 'AvgpCa5.75';
+        pCaData{4} = [1,3,13;2,3,13;3,3,13;4,3,13;5,3,13;6,3,13];
+        % i_pca100ms_hold = [4 5; 3 12; 3 12;3 13; 3 13; 3 13];
     case 6.0
         %% 6.0 - only 100ms in latter experiments
         pCaData{1} = [];pCaData{2} = [];pCaData{3} = [];
-        pCaData{4} = [1,5,5;2,3,13;3,3,13;4,3,14;5,3,14;6,3,14];
-        i_pca100ms_hold = [5 5; 3 13; 3 13;3 14; 3 14; 3 14];
-        dsName = 'AvgpCa6';
+        pCaData{4} = [1,3,14;2,3,14;3,3,14;4,3,14;5,3,14;6,3,14];
+        % i_pca100ms_hold = [5 5; 3 13; 3 13;3 14; 3 14; 3 14];
     case 6.25
         %% 6.25 - only 100ms in latter experiments
         pCaData{1} = [];pCaData{2} = [];pCaData{3} = [];
-        pCaData{4} = [1,6,5;2,3,14;3,3,14;4,3,15;5,3,15;6,3,15];
-        i_pca100ms_hold = [5 5; 3 14; 3 14;3 15; 3 15; 3 15];
-        dsName = 'AvgpCa6.25';
+        pCaData{4} = [1,3,15;2,3,15;3,3,15;4,3,15;5,3,15;6,3,15];
+        % i_pca100ms_hold = [5 5; 3 14; 3 14;3 15; 3 15; 3 15];
 end
+    
 
 %% Get corresponding relaxed for scaling options
+
+% relaxed from AverageRamps
+
 % Only final dataset with the new protocol
-relaxed{1} = [1, 1, 9;2, 1, 6;3, 1, 6;4,1,9;5, 1, 9;6, 1, 9];
-relaxed{2} = [1, 1, 8;2, 1, 7;3, 1, 7;4,1,8;5, 1, 8;6, 1, 8];
-relaxed{3} = [1, 1, 7;2, 1, 8;3, 1, 8;4,1,7;5, 1, 7;6, 1, 7];
-relaxed{4} = [1, 1, 6;2, 1, 9;3, 1, 9;4,1,6;5, 1, 6;6, 1, 6];
+% relaxed{1} = [1, 1, 9;2, 1, 6;3, 1, 6;4,1,9;5, 1, 9;6, 1, 9];
+% relaxed{2} = [1, 1, 8;2, 1, 7;3, 1, 7;4,1,8;5, 1, 8;6, 1, 8];
+% relaxed{3} = [1, 1, 7;2, 1, 8;3, 1, 8;4,1,7;5, 1, 7;6, 1, 7];
+% relaxed{4} = [1, 1, 6;2, 1, 9;3, 1, 9;4,1,6;5, 1, 6;6, 1, 6];
 
 %% Adjustment of remaining active force
 % figure(6); clf; 
@@ -320,7 +298,9 @@ for i_rds = 1:length(rds)
         rmp.Fraw = rmp.F;
         % rmp.F = rmp.F - FremFunArr{i_logtrace}(rmp.t, dtst.rd);            
         
-        % base on nothing - just absolute peak values
+        switch norm_opt
+            case "none"
+            % base on nothing - just absolute peak values
         base_rel = 1;
         % base on absolute peak of each ramp
         % base_rel = max(rmp.F);
@@ -336,9 +316,11 @@ for i_rds = 1:length(rds)
         % base_rel = eds{relaxed{4}(i_logtrace, 2),...
                         % relaxed{4}(i_logtrace, 3)}.peak;
         % base on Fmax
+            case "Fmax"
         base_rel = dataset_maxF(rampSet(i_logtrace, 1));
         % base on staeady state of the slowest ramp (in AverageRampsCa)
         % base_rel = dataset_ssF(i_logtrace);
+        end
 
         if isnan(base_rel) || base_rel == 0
             continue;
@@ -418,150 +400,156 @@ for i_rds = 1:length(rds)
 end
 
 %% Frem correction of the averaged
-cl = lines(6);
-% using the AverageRamps.m - just for the figures here
-pca11data = load('pca11data.mat');
-FarrRel = pca11data.Farr; TarrRel = pca11data.Tarr;
-% load pca4data60sNoFremCorr.mat
-% identified from fitting the no Ca ramps FitDecayOverlay.m
-rampShift = [5.3980    0.8234    0.2223   0.0100];
-xRel = [4.4271    0.2121    4.8964];
-ref60s = NaN;
-f = figure(9); clf;
-aspect = 1.5;
-f.Position = [300 200 7.2*96 7.2*96/aspect];
-tiledlayout(1, 4, "Padding","compact", "TileSpacing","tight")
-% drawPlots = [4 3 1];
-for i_rds = [4 3 2 1]
-    if i_rds == 0
-        i_rds = 4;
-        nexttile(1, [1 1])
-        title('Ramp: 0.1s')
-    else
-        nexttile();
-    end
-    clear rmp rmpRel rmpRelRes;
-    if isempty(Farr{i_rds})
-        FarrCorr{i_rds} = [];
-        continue;
-    end
-    rmp = table(); rmpRel = table();
-
-    rmp.F = movmean(Farr{i_rds}, [0 0]);
-    rmp.t = Tarr{i_rds} - rds(i_rds);
-    rmpRes = rmp(1:50:end, :);
-    rmpRel.F = movmean(FarrRel{i_rds}, [8 8]);
-    rmpRel.t = TarrRel{i_rds} - rds(i_rds);
-    rmpRelRes = rmpRel(1:50:end, :);
-    fitRelRng = rmpRelRes.t > 0;
-
-    %% fit the relaxed decay first
-    f_fitRelax = @(x) xRel(1)*max(1e-6, (x + rampShift(i_rds))).^(-xRel(2)) + xRel(3);
-    % [rae rgood] = fit(rmpRelRes.t(fitRelRng), rmpRelRes.F(fitRelRng), f_fitRelax, 'StartPoint', [10, 0.1, 5, 0.001], 'Lower', [0, 0, 0, 0]);    
-
-    % fprintf('Dataset %d: %0.1f(t)^(-%0.2f) + %0.2f\n', i_rds, rae.a, rae.b, rae.c);    
-    %% remaining force at the beginning, assuming it is the same at the end
-    % sel = rmp.t < - rds(i_rds) & rmp.t > -1 - rds(i_rds);
-    % plot(rmp.t(sel), rmp.F(sel))
-    FremMax = mean(rmp.F(rmp.t < - rds(i_rds) & rmp.t > -1 - rds(i_rds)));
-
-    % align the Frem0?
-    % if isnan(ref60s)
-    %     ref60s = FremMax;
-    % end
-    % shiftRel = ref60s - FremMax;
-    % rmpRes.F = rmpRes.F + shiftRel;
-    % FremMax = FremMax + shiftRel;
-
-    %% identify the exponential coefficient by fitting
-    t_fit_start = 15;    
-    fitRng = rmpRes.t > t_fit_start & rmpRes.t <= rmpRes.t(end);
+correctFrem = false;
+if correctFrem
+    cl = lines(6);
+    % using the AverageRamps.m - just for the figures here
+    pca11data = load('pca11data.mat');
+    FarrRel = pca11data.Farr; TarrRel = pca11data.Tarr;
+    % load pca4data60sNoFremCorr.mat
+    % identified from fitting the no Ca ramps FitDecayOverlay.m
+    rampShift = [5.3980    0.8234    0.2223   0.0100];
+    xRel = [4.4271    0.2121    4.8964];
+    ref60s = NaN;
+    f = figure(9); clf;
+    aspect = 1.5;
+    f.Position = [300 200 7.2*96 7.2*96/aspect];
+    tiledlayout(1, 4, "Padding","compact", "TileSpacing","tight")
+    % drawPlots = [4 3 1];
+    for i_rds = [4 3 2 1]
+        if i_rds == 0
+            i_rds = 4;
+            nexttile(1, [1 1])
+            title('Ramp: 0.1s')
+        else
+            nexttile();
+        end
+        clear rmp rmpRel rmpRelRes;
+        if isempty(Farr{i_rds})
+            FarrCorr{i_rds} = [];
+            continue;
+        end
+        rmp = table(); rmpRel = table();
     
-    f_k = @(a, b, c, x) a*(1-exp(-b*x)) + c;
-    f_fit = @(a, b, c, x) f_k(a, b, c, x) + f_fitRelax(x);
-    [ae good] = fit(rmpRes.t(fitRng), rmpRes.F(fitRng), f_fit, 'StartPoint', [1, 0.01, 5], 'Lower', [0, 0, 0], 'Upper', [1000, 0.1, 100]);    
-    fprintf('> fit goodness: %0.3f, Frem time constant: %0.4f \n', good.rmse, ae.b);
+        rmp.F = movmean(Farr{i_rds}, [0 0]);
+        rmp.t = Tarr{i_rds} - rds(i_rds);
+        rmpRes = rmp(1:50:end, :);
+        rmpRel.F = movmean(FarrRel{i_rds}, [8 8]);
+        rmpRel.t = TarrRel{i_rds} - rds(i_rds);
+        rmpRelRes = rmpRel(1:50:end, :);
+        fitRelRng = rmpRelRes.t > 0;
     
-    % what is the shift, if we fix the end - the force rise must coincide
-    % with the FremMax
-    FremFitShift = FremMax - f_k(ae.a, ae.b, 0, rmpRes.t(end));
-    FremFun = @(t, rd) (t <= -rd)*FremMax + ...
-            (t > -rd & t < 0).*((f_k(ae.a, ae.b, FremFitShift, 0) - FremMax)/rd*t + FremFitShift) +... % 
-            (t >= 0).*(...
-            f_k(ae.a, ae.b, FremFitShift, t)); % exponential approximation
-
+        %% fit the relaxed decay first
+        f_fitRelax = @(x) xRel(1)*max(1e-6, (x + rampShift(i_rds))).^(-xRel(2)) + xRel(3);
+        % [rae rgood] = fit(rmpRelRes.t(fitRelRng), rmpRelRes.F(fitRelRng), f_fitRelax, 'StartPoint', [10, 0.1, 5, 0.001], 'Lower', [0, 0, 0, 0]);    
     
-    % show the fits
-    cla;
-    x_ax = 0.1:0.1:rmpRes.t(end);
-
-    pltF = plot(rmpRes.t, rmpRes.F, '-', Color=cl(1, :),LineWidth=1 ); hold on;        
-    % pltFit = plot(x_ax, f_fit(ae.a, ae.b, ae.c, x_ax), ':', LineWidth=4, Color=cl(1, :)*0.8);
-    % pltRelax = plot(rmpRelRes.t, rmpRelRes.F, Color=cl(2, :));
-    % pltFitRelax = plot(x_ax, f_fitRelax(x_ax), ':', LineWidth=3, Color=cl(2, :));
-    pltFitRemF = plot(x_ax, f_k(ae.a, ae.b, ae.c, x_ax), ':', LineWidth=3, Color=cl(3, :));
+        % fprintf('Dataset %d: %0.1f(t)^(-%0.2f) + %0.2f\n', i_rds, rae.a, rae.b, rae.c);    
+        %% remaining force at the beginning, assuming it is the same at the end
+        % sel = rmp.t < - rds(i_rds) & rmp.t > -1 - rds(i_rds);
+        % plot(rmp.t(sel), rmp.F(sel))
+        FremMax = mean(rmp.F(rmp.t < - rds(i_rds) & rmp.t > -1 - rds(i_rds)));
     
-    xp = rmpRes.t(fitRng);
-    % pltFitZone = fill([xp(1) xp(end) xp(end) xp(1)], [-10 -10 60 60], [1 0.8 0.8], 'FaceAlpha',0.24, EdgeColor='none');
+        % align the Frem0?
+        % if isnan(ref60s)
+        %     ref60s = FremMax;
+        % end
+        % shiftRel = ref60s - FremMax;
+        % rmpRes.F = rmpRes.F + shiftRel;
+        % FremMax = FremMax + shiftRel;
     
-    % show the remaining force approximation
-    pltApprx = plot(rmpRes.t, FremFun(rmpRes.t, rds(i_rds)), '-.', LineWidth=3, Color=cl(4, :));
-    
-    % show the corrected dataset
-    % clf;
-    pltCorr = loglog(rmpRes.t, rmpRes.F - FremFun(rmpRes.t, rds(i_rds)), '-', Color=cl(5, :), LineWidth=3);    
-    % pltFrem0 = plot(-1 - rds(i_rds), FremMax, 'x', MarkerSize=10, LineWidth=3, Color=cl(4, :));
-    
-    %
-    % approximation zones
-    xlim([rmpRes.t(1), rmpRes.t(end)]);
-    %
-    FarrCorr{i_rds} = rmp.F - FremFun(rmp.t, rds(i_rds));
-    TarrCorr{i_rds} = rmp.t + rds(i_rds);
-    title(sprintf('Ramp %g s',rds(i_rds)), 'interpreter', 'LaTex');
-
-
-    ylim([-2 48]);
-    if i_rds < 4
-        yticks([]);
-    else
-        yticks([0 10 20 30 40]);
-        ylabel('$\Theta$ (kPa)', Interpreter='latex')
-    end
-    xlabel("$t - t_r$ (s)", Interpreter="latex")
-    if i_rds == 1
-        % leg = legend([pltF, pltFit, pltApprx,...
-        %     pltRelax, pltFitRelax, pltFrem0,  ...
-        %     pltCorr, pltFitRemF, pltFitZone],...
-        %     "$\Theta_A$", "$\Theta_F$", '$\Theta^*$', ...
-        %     "Relaxed stress", "$\sim C_1 (t-t_r)^{-\alpha}$","$\Theta_\infty$",...
-        %     "$\Theta_{corr} = \Theta_A - \Theta^*$", "$\sim C_2(1-e^{-b(t-t_r)})$", "$t - t_r > 15$",...             
-        %     Location="northeast", NumColumns=3, Interpreter="latex");
-        leg = legend([pltF, pltApprx,...            
-            pltCorr, pltFitRemF ],...
-            "$\Theta_A$", '$\Theta^*$', ...
-            "$\Theta_{corr} = \Theta_A - \Theta^*$", "$\sim C_2(1-e^{-b(t-t_r)})$", ...             
-            Location="northeast", NumColumns=2, Interpreter="latex");
+        %% identify the exponential coefficient by fitting
+        t_fit_start = 15;    
+        fitRng = rmpRes.t > t_fit_start & rmpRes.t <= rmpRes.t(end);
         
-        leg.ItemTokenSize = [12 12]
+        f_k = @(a, b, c, x) a*(1-exp(-b*x)) + c;
+        f_fit = @(a, b, c, x) f_k(a, b, c, x) + f_fitRelax(x);
+        [ae good] = fit(rmpRes.t(fitRng), rmpRes.F(fitRng), f_fit, 'StartPoint', [1, 0.01, 5], 'Lower', [0, 0, 0], 'Upper', [1000, 0.1, 100]);    
+        fprintf('> fit goodness: %0.3f, Frem time constant: %0.4f \n', good.rmse, ae.b);
+        
+        % what is the shift, if we fix the end - the force rise must coincide
+        % with the FremMax
+        FremFitShift = FremMax - f_k(ae.a, ae.b, 0, rmpRes.t(end));
+        FremFun = @(t, rd) (t <= -rd)*FremMax + ...
+                (t > -rd & t < 0).*((f_k(ae.a, ae.b, FremFitShift, 0) - FremMax)/rd*t + FremFitShift) +... % 
+                (t >= 0).*(...
+                f_k(ae.a, ae.b, FremFitShift, t)); % exponential approximation
+    
+        
+        % show the fits
+        cla;
+        x_ax = 0.1:0.1:rmpRes.t(end);
+    
+        pltF = plot(rmpRes.t, rmpRes.F, '-', Color=cl(1, :),LineWidth=1 ); hold on;        
+        % pltFit = plot(x_ax, f_fit(ae.a, ae.b, ae.c, x_ax), ':', LineWidth=4, Color=cl(1, :)*0.8);
+        % pltRelax = plot(rmpRelRes.t, rmpRelRes.F, Color=cl(2, :));
+        % pltFitRelax = plot(x_ax, f_fitRelax(x_ax), ':', LineWidth=3, Color=cl(2, :));
+        pltFitRemF = plot(x_ax, f_k(ae.a, ae.b, ae.c, x_ax), ':', LineWidth=3, Color=cl(3, :));
+        
+        xp = rmpRes.t(fitRng);
+        % pltFitZone = fill([xp(1) xp(end) xp(end) xp(1)], [-10 -10 60 60], [1 0.8 0.8], 'FaceAlpha',0.24, EdgeColor='none');
+        
+        % show the remaining force approximation
+        pltApprx = plot(rmpRes.t, FremFun(rmpRes.t, rds(i_rds)), '-.', LineWidth=3, Color=cl(4, :));
+        
+        % show the corrected dataset
+        % clf;
+        pltCorr = loglog(rmpRes.t, rmpRes.F - FremFun(rmpRes.t, rds(i_rds)), '-', Color=cl(5, :), LineWidth=3);    
+        % pltFrem0 = plot(-1 - rds(i_rds), FremMax, 'x', MarkerSize=10, LineWidth=3, Color=cl(4, :));
+        
+        %
+        % approximation zones
+        xlim([rmpRes.t(1), rmpRes.t(end)]);
+        %
+        FarrCorr{i_rds} = rmp.F - FremFun(rmp.t, rds(i_rds));
+        TarrCorr{i_rds} = rmp.t + rds(i_rds);
+        title(sprintf('Ramp %g s',rds(i_rds)), 'interpreter', 'LaTex');
+    
+    
+        ylim([-2 48]);
+        if i_rds < 4
+            yticks([]);
+        else
+            yticks([0 10 20 30 40]);
+            ylabel('$\Theta$ (kPa)', Interpreter='latex')
+        end
+        xlabel("$t - t_r$ (s)", Interpreter="latex")
+        if i_rds == 1
+            % leg = legend([pltF, pltFit, pltApprx,...
+            %     pltRelax, pltFitRelax, pltFrem0,  ...
+            %     pltCorr, pltFitRemF, pltFitZone],...
+            %     "$\Theta_A$", "$\Theta_F$", '$\Theta^*$', ...
+            %     "Relaxed stress", "$\sim C_1 (t-t_r)^{-\alpha}$","$\Theta_\infty$",...
+            %     "$\Theta_{corr} = \Theta_A - \Theta^*$", "$\sim C_2(1-e^{-b(t-t_r)})$", "$t - t_r > 15$",...             
+            %     Location="northeast", NumColumns=3, Interpreter="latex");
+            leg = legend([pltF, pltApprx,...            
+                pltCorr, pltFitRemF ],...
+                "$\Theta_A$", '$\Theta^*$', ...
+                "$\Theta_{corr} = \Theta_A - \Theta^*$", "$\sim C_2(1-e^{-b(t-t_r)})$", ...             
+                Location="northeast", NumColumns=2, Interpreter="latex");
+            
+            leg.ItemTokenSize = [12 12]
+        end
     end
+    fontsize(12, "points")
+    f = gcf();
+    exportgraphics(f,'Figures/Frem_Correction.png','Resolution',150)
+else
+   FarrCorr = Farr;
+    TarrCorr = Tarr; 
 end
-fontsize(12, "points")
-f = gcf();
-exportgraphics(f,'Figures/Frem_Correction.png','Resolution',150)
-
 
 %%
 % Farr = FarrCorr;
 % Tarr = TarrCorr;
 % save('pCa4dataNoAdj60sFremCorrShifted.mat', 'Tarr','Farr')
 if pCa == 4.4
-    save('pCa4dataNoAdj60sFremCorr.mat', 'Tarr','FarrCorr', 'Farr')
+    % save('pCa4dataNoAdj60sFremCorr.mat', 'Tarr','FarrCorr', 'Farr')
 end
 
 %% resample and save and plot the AVG
 for i_rds = [4 3 2 1]
     if isempty(FarrCorr{i_rds})
+        % skip for slow ramps in higher pCa
         continue;
     end
     t = TarrCorr{i_rds};
@@ -589,7 +577,7 @@ for i_rds = [4 3 2 1]
     figure(7);hold on;plot(t_s, FLSDint(:, 1), 's-');
     tab_rmpAvg = table(t_s' + 2, FLSDint(:, 2), FLSDint(:, 1), FLSDint(:, 3));
     tab_rmpAvg.Properties.VariableNames = {'Time', 'L', 'F', 'SD'};
-    writetable(tab_rmpAvg, ['data/' dsName '_' num2str(rds(i_rds)) 's.csv']);
+    writetable(tab_rmpAvg, ['../data/' dsName '_' num2str(rds(i_rds)) 's.csv']);
 %% plot the AVG
 
     % Fill the area between upper and lower bounds to show the confidence interval
@@ -621,7 +609,11 @@ for i_rds = [4 3 2 1]
 end
 peaks44 = peaks;
 %% peak sum up figure
-peaks = peaks44;
+if norm_opt == "none"
+    peaks = peaks44;
+else
+    peaks = peaks_norm;
+end
 % normtype = 'Norm to highest peak'
 % normtype = 'Norm to steady state'
 % normtype = 'Norm to relaxed peaks for each ramp'

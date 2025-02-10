@@ -254,6 +254,7 @@ isolateRunCombinedModelAllpCas(optModsInLine, modSel, modSet, pcax, pcaSel, true
 isolateRunCombinedModelAllpCas([], modSel, modSet, pcax, [])
 %% Test modSet
 figure(80085); clf;
+modSel = [4 6 7 9];
 
 for i_pca = 1:size(modSet, 1)
     %%
@@ -265,7 +266,7 @@ for i_pca = 1:size(modSet, 1)
     params = modSet(i_pca, :);
     nexttile;hold on;
     isolateRunCombinedModel([], [], params, pcax(i_pca), true, [1 2 3 4])
-    title(sprintf('pCa %g'), pcax(i_pca));
+    title(sprintf('pCa %g', pcax(i_pca)));
 end
 
 %% plot interesting parameter values into one plot
@@ -273,7 +274,7 @@ figure(1000);clf;
 % selectedParams = [3 4 5 6 7 8 9];
 selectedParams = modSel;
 % selectedParams = 1:23;
-% tiledlayout(2,2);
+% tiledlayout(4,1);
 tiledlayout('flow');
 for i_selpar = 1:length(selectedParams)
     nexttile(i_selpar);hold on;
@@ -299,17 +300,40 @@ ms = [...
        433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
        433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
     ];
+%% PEVK KO
+
+ms_PevkKO = ms(1, :);
+ms_PevkKO(7) = 1e-9;
+isolateRunCombinedModel([], [], ms_PevkKO, [4.4], true, [1 2 3 4])
+
+%% Fig 10 - sin refolding experiment
+drawPlots = true;
+rampSet = [3];
+
+mod = ms(1, :);    
+    
+plotInSeparateFigure = true;
+
+simtype = 'sin';
+pCa = 11;
+mod(15) = 2;
+RunCombinedModel;
+
 
 %% fit params a func
 figure(8008135);clf;
 fitHill(modSet, modSel(3), pcax)
-tiledlayout('flow');
+% tiledlayout('flow');
+% tiledlayout(2, 2)
+tiledlayout(1, 4)
+
 for i_ms = 1:length(modSel)
     nexttile();hold on;
     fitHill(modSet, modSel(i_ms), pcax);
-    title(sprintf('Fitting param %s', modNames{modSel(i_ms)}));
+    ylabel(sprintf('%s', modNames{modSel(i_ms)}));
+    % title(sprintf('Fitting param %s', modNames{modSel(i_ms)}));
 end
-
+fontsize(12, 'points')
 %% Functions below
 function [bestModSel, bestParams, bestCost, combinations] = findOptimalParameters(modSel, params, optimizedParams, costThreshold, combinations)
     modNames = {'k_p(NoCa)', 'k_d', 'n_p', 'n_U', 'n_d', 'alphaU', 'k_{PEVK,A}', 'k_{PEVK,D}', 'k_p(highCa)', 'Fss', 'b', 'c', 'd', 'mu', 'alphaF_0','k_{PEVK,A} (low Ca)', 'k_{PEVK,D} (low Ca)', 'Lref', 'delU', ...
@@ -457,16 +481,18 @@ end
 function cost = isolateRunCombinedModel(optMods, modSel, params, pCa, drawPlots, rampSet)
 % just to isolate the script, so the variables can't intervene
 % figure(pCa*10);    
+
 if nargin < 5
     drawPlots = false;
     rampSet = [4];
 elseif nargin < 6 
     rampSet = [4];
 end
+
     mod = params;
     mod(modSel) = optMods;
     % cost = sum((optMods/10 - 2).^2);
-    plotInSeparateFigure = false;
+    plotInSeparateFigure = true;
     RunCombinedModel;
 end
 
@@ -526,10 +552,10 @@ else
     y_best_fit = y_fit_decreasing;
 end
 
-scatter(x_data, y_data, 100, 'ro', 'filled', 'DisplayName', 'Data Points');
+scatter(x_data, y_data, 80, 'kx','linewidth', 3, 'DisplayName', 'Data Points');
 % plot(x_fine, y_fit_rising, 'b-', 'LineWidth', 2, 'DisplayName', 'Hill (Rising)');
 % plot(x_fine, y_fit_decreasing, 'g--', 'LineWidth', 2, 'DisplayName', 'Hill (Decreasing)');
-plot(x_fine, y_best_fit, 'k-', 'LineWidth', 3, 'DisplayName', ['Best Fit: ', best_fit]);
+plot(x_fine, y_best_fit, 'k-', 'LineWidth', 1.5, 'DisplayName', ['Best Fit: ', best_fit]);
 
 if cutXaxis
     % Set custom x-ticks with a break
@@ -539,8 +565,9 @@ end
 %%
 legend(gca(), 'off');
 xlabel('pCa');
-ylabel('Param value');
-title(['Hill Function Fit - Best Model: ', best_fit]);
+% ylabel('Param value');
+
+% title(['Hill Function Fit - Best Model: ', best_fit]);
 
 % Display best-fit parameters
 disp(['Best Fit Model: ', best_fit]);

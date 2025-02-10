@@ -309,6 +309,11 @@ disp(['mod6 = [' sprintf('%1.3g, ', mod6(modSel)) '];'])
 %% Run SA
 [c0, cost_sap, cost_sam] = runSa(4.4, mod4, modSel)
 
+%% refolding
+% mod(15)
+params(15) = 2;
+evalCombined([], params, [], [4.4])
+
 
 %% Run a SA
 
