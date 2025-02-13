@@ -1,6 +1,6 @@
 %Parameters to be potentially excluded one-by-one initially
-modNames = {'k_p(NoCa)', 'k_d', 'n_p', 'n_U', 'n_d', '\alpha_U', 'k_{A}', 'k_{D}', 'k_p', '\Theta_{ss}', 'b', 'c', 'd', '\mu', 'alphaF_0','k_{PEVK,A} (low Ca)', 'k_{PEVK,D} (low Ca)', 'Lref', 'delU', ...
-        '\alpha_U', 'Fss_pCa', 'kd_pCa', 'kDf'};
+paramNames = {'\F_{ss}', 'n_ss' , 'k_p'    , 'n_p'    , 'k_d'   , 'n_d'    , '\alpha_U'  , 'n_U'    , '\mu'    , '\delta_U'    , 'k_{A}'   , 'k_{D}'   };
+
 mod4 = [433, 4e+04, 2.37, 6.05, 2.74, 1.82e+06, 0.00601, 0.383, 4.37e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
 mod6_2 = [433, 4e+04, 2.02, 7.26, 2.62, 2.37e+06, 4.47e-05, 4.32, 476, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 2.89e+04, 0, ];
 mod11 = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
@@ -185,7 +185,7 @@ modSel = resultOptim{ires}.modSel;
 for i = 1:size(modSel, 2)
     nexttile();
     plot(-pcax, modSet(:, modSel(i)), 'x-', LineWidth=3);
-    title(modNames{modSel(i)});
+    title(paramNames{modSel(i)});
 end
 
 
@@ -365,7 +365,7 @@ fitHill(modSet, modSel(3), pcax)
 tiledlayout('flow', TileSpacing='compact');
 % tiledlayout(2, 2)
 % tiledlayout(1, 4)
-modNames_modSel = modNames(modSel);
+modNames_modSel = paramNames(modSel);
 modNames_units = {"-", "s^{-1}", "s^{-1}", "s^{-1}"}
 for i_ms = 1:length(modSel)
     nexttile();hold on;

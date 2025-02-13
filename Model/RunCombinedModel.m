@@ -1,56 +1,59 @@
 % Runs the passive model - could be run separately in a clear environment
 % or by OptimizeCOmbined.m
-% we have two datasets possible
-% datasetname = 'pnbonly';
-% colors = autumn(5);
 
-drawAllStates = false;
-plotDetailedPlots = false;
-drawFig1 = false;
-exportRun = false;
-rerunFitting = false;
-plotInSeparateFigure = false;
-
-
-datasetname = 'pnbmava';
-colors = gray(5);
-
-pCa_noEffect = 11;
+%% PLoting and visualization options
+if ~exist('drawPlots', 'var')
+    drawPlots = true;
+end
+if ~exist('drawAllStates', 'var')
+    drawAllStates = false;
+end
+if ~exist('plotDetailedPlots', 'var')
+    plotDetailedPlots = false;
+end
+if ~exist('drawFig1', 'var')
+    drawFig1 = false;
+end
+if ~exist('exportRun', 'var')
+    exportRun = false;
+end
+if ~exist('rerunFitting', 'var')
+    rerunFitting = false;
+end
 if ~exist('plotInSeparateFigure', 'var')
     plotInSeparateFigure = true;
 end
 
+%% model inputs settings
 if ~exist('pCa', 'var')
     pCa = 11;
 end
-
-if ~exist('mod', 'var')
+if ~exist('params', 'var')
     % Nice fit of everything    
-    ms = [...
-       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+    paramSet = [...
+      5.19       12.8       4345       2.37      4e+04       2.74  8.658e+05      5.797      0.678      0.165   0.005381      0.383 
+      5.19       12.8       3998       2.37      4e+04       2.74  2.837e+06      6.211      0.678      0.165   0.005213      0.383 
+      5.19       12.8       3109       2.37      4e+04       2.74  3.184e+06      6.526      0.678      0.165   0.002699      0.383 
+      5.19       12.8       1623       2.37      4e+04       2.74  1.807e+07       7.96      0.678      0.165  3.261e-05      0.383 
+      5.19       12.8      887.7       2.37      4e+04       2.74  1.876e+07      8.505      0.678      0.165  3.478e-06      0.383 
+      5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN 
     ];
-   pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+   pcax = [4.51, 5.5, 5.75, 6, 6.2, 11];
    i_pcax = find(pCa == pcax);
-   mod = ms(i_pcax, :);
-
-   dropParams = [1 2 15 20 21 23];
-   modSel = setdiff(1:23, dropParams);
-   remainingParamNames = modNames(setdiff(1:23, dropParams));
+   params = paramSet(i_pcax, :);
 end
-if ~exist('drawPlots', 'var')
-    drawPlots = true;
-end
-
 if ~exist('rampSet', 'var')
     rampSet = [2 3 4];
 end
+if ~exist('simtype', 'var')
+    % simtype = 'sin';
+    % simtype = 'rampbeat';
+    simtype = 'ramp';
+end
 
+%% preapre environment
 load SoHot.mat;
+% Cool colorbar creation, stored in mat file though
 %     colors = [
 %         1, 1, 1; % White for zero
 %         0, 0.5, 1; % Blue (complementary to orange)
@@ -61,27 +64,28 @@ load SoHot.mat;
 %     SoCool = interp1(linspace(0, 1, size(colors, 1)), colors, linspace(0, 1, 256));
 % save SoCool SoCool;
 load SoCool.mat;
+datasetname = 'pnbmava';
+colors = gray(5);
+
+pCa_noEffect = 11; % at 11 we do not consider PEVK attachment
 
 
-% simtype = 'sin';
-% simtype = 'rampbeat';
-if ~exist('simtype', 'var')
-    simtype = 'ramp';
-end
 
-% pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
-% pCa 10 - load Relaxed, run the PEVK attachment model
-% pCa < 10 - load AvgpCa dataset, Ca effect in place
 clear Force
 clear Time
 clear Length
 clear outStruct;
-if any(mod < 0) 
+if any(params < 0) 
     cost = inf;
     return;
 end
 
 figInd = get(groot,'CurrentFigure'); % replace figure(indFig) later without stealing the focus
+
+%% load data files
+% pCa 11 - load Relaxed, do not run the extended, PEVK attachment model
+% pCa 10 - load Relaxed, run the PEVK attachment model
+% pCa < 10 - load AvgpCa dataset, Ca effect in place
 
 % rds = fliplr([0.02 0.1, 1, 10 100]);
 rds = fliplr([0.1, 1, 10, 100]);
@@ -108,102 +112,37 @@ for i_rd = 1:length(rds)
       datatables{i_rd} = [];
   end
   
-  % else
-  %   % new format for pCa experiments
-  %   datatables{i_rd} = readtable(['..\Data\PassiveCa_2\bakers_passiveStretch_pCa' num2str(pCa) '_' num2str(1000*rds(i_rd)) 'ms.csv']);
-  % end
 end
-% if isinf(pCa)
-%     % hack - the no-Ca noPNB experiments had higher ramps
-%   Lmax = 0.4;
-% else    
-    % follow-up experiments had lower ramps
-    Lmax = 1.175 - 0.95;
-% end
 
-% Ls0  = 0.10*mod(13);
-% Nx   = 25;          % number of space steps
-% ds   = (0.36-Ls0)/(Nx-1);      % space step size
-% s  = (0:1:Nx-1)'.*ds; % strain vector
-% Ng  = 20;            % number of glubules on globular chain
-% delU = 0.0125*mod(1);
+%% Model numerical parameters
 
 % half-sarcomere ramp height
-% Lmax = 0.225;
-% Nx   = 25;          % number of space steps
+Lmax = 1.175 - 0.95; % Lmax = 0.225;
 Nx   = 15;          % number of space steps
 ds   = 1*(Lmax)/(Nx-1);      % space step size
 % use this to make sure the ds is big wnough
 % ds   = 1*(Lmax + 0.015)/(Nx-1);
 s  = (0:1:Nx-1)'.*ds; % strain vector
 Ng = 10; 
-% so all unfolded make mod(19) = Ng*delU slack, i.e. ~0.15 um. individual delU is about 0.01
-delU = mod(19)/Ng;
 
+%% model input adjustable parameters
+% new params assignments
+Fss  = params(1 );		% Fss   Steady state level
+n_ss = params(2 );		% n_ss  Steady state level exponent
+kp   = params(3 );		% kp    proximal chain force constantkS   =
+np   = params(4 );		% np    proximal chain force exponent
+kd   = params(5 );		% kd    proximal chain force constant high Cabist
+nd   = params(6 );		% nd    distal chain force exponent
+alphaU  = params(7 );		% a_U   chain unfolding rate constant
+nU   = params(8 );		% nU    unfolding rate exponent
+mu   = params(9 );		% mu    small enough not to affect the result
+delU = params(10)/Ng;  % delU 
+kA   = params(11);     % kA   
+kD   = params(12); 	% kD    PEVK detachment rate
 
-% propose a function to kA = f(pCa)
-% kA   = 1*mod(14);
-% kD   = 1*mod(15);
-% kC   = 103.33*mod(2);
-% kS   = 300*mod(3);         % series element spring constant
-% alphaU = 2000*mod(4);       % chain unfolding rate constant
-% alphaF = 1*mod(5);
-% nC = 1.77*mod(6);
-% nS = 2.56*mod(7);
-% nU = 4*mod(8);
-% mu = 2.44*mod(9); 
-
-% g0 = ones(1,11);
-% g0 = mod;
-% mod = 0;
-
-kp   = mod(1); % ok      % proximal chain force constant
-kd   = mod(2); % ok       % distal chain force constant
-
-if ~isnan(mod(16))
-    kA   = mod(16); % PEVK attachment rate
-else
-    kA   = mod(7);
-end
-
-if ~isnan(mod(17))
-    kD   = mod(17); % PEVK detachment rate
-else
-    kD   = mod(8); % PEVK detachment rate
-end
-
-alphaU = mod(6);         % chain unfolding rate constant
-% Fss = 3.2470*mod(10); % Parallel steady state force
-% Fss = 4.89;
-Fss = mod(10);
-if pCa < 21
-    kp   = mod(9);      % proximal chain force constantkS   = g0(2)*14122;        % distal chain force constant
-    kA   = mod(7);
-    kD   = mod(8); % PEVK detachment rate
-    if ~isnan(mod(20))
-        % cant exceed the no Ca unfolding rate!
-        alphaU = min(alphaU, mod(20));         % chain unfolding rate constant
-    end
-    if ~isnan(mod(21))
-        Fss = mod(21);
-    end
-    if ~isnan(mod(22))
-        kd   = mod(22);      % proximal chain force constant high Cabist
-    else
-        kd = mod(2)*mod(9)/mod(1); % scaled to kp_ca in the same ratio as kd_relaxed to kp_relaxed
-    end
-        
-end
-kDf = mod(23);
-alphaF = 0; % chain folding rate constant - not implemented yet
-np = mod(3); % proximal chain force exponent
-nd = mod(5); % distal chain force exponent
-nU = mod(4); % unfolding rate exponent
-nF = 1; % folding rate exponent (not implemented yet)
-mu = mod(14); % small enough not to affect the result
-L_0  = mod(18); % reference sarcomere length (um)
-alphaF = 0;
-alphaF_0 = mod(15);
+kDf = 0; % universal modifier
+L_0  = 1; % reference sarcomere length (um)
+alphaF_0 = 0; % refolding constant - refolding disabled
 
 % Calculate proximal globular chain force Fp(s,n) for every strain and
 % value. 
@@ -740,18 +679,16 @@ maxPu = 0; maxPa = 0;
   % a*(-b + Lmax).^c + d = 1.2716*3;
   % a*(-b + Lmax).^c = 1.2716*3 - d;
   
-  b = mod(11);
-  c = mod(12);
-  d = mod(13);
+  
   % apply constraints
-  if b < 0 || c <= 0 || d < 0 
+  if n_ss < 0 
       cost = inf;
       return;
   end
   
   % calculate a, so that the max value is the same    
-  a = (Fss - d)/((Lmax -b)^c);
-  Force_par{j} = a*max(Length{j} - b, 0).^c + d;
+  k_ss = (Fss)/((Lmax)^n_ss);  
+  Force_par{j} = k_ss*max(Length{j}, 0).^n_ss;
   % calc force
   Force{j} = Force{j} + Force_par{j}; 
     
