@@ -576,7 +576,8 @@ maxPu = 0; maxPa = 0;
                 ga = gca;
                 ga.XTick = [];
             end 
-            fontsize(12, 'points')
+            fontsize(12, 'points');
+            set(tl, 'TickLabelInterpreter', 'latex');
             %% 2D shaded plot - attached
             if pCa < 10
                 aspect = 1.4; % make the plots rectangular for pca as well
@@ -618,7 +619,8 @@ maxPu = 0; maxPa = 0;
                 end
                 xlabel('$s$ ($\mu$m)', Interpreter='latex');
                 box on;
-                fontsize(12, 'points')
+                fontsize(12, 'points');
+                set(tile_semilogx, 'TickLabelInterpreter', 'latex');
             end
             %% lollipop plot
             % % identify leading states
@@ -765,7 +767,8 @@ maxPu = 0; maxPa = 0;
         xlabel('$t$ (s)', Interpreter='latex');
         legend('Tension', 'Insets', 'Location','northwest');
         ylabel('$\Theta$ (kPa)', Interpreter='latex')
-        fontsize(12, 'points')
+        fontsize(12, 'points');
+        set(tl, 'TickLabelInterpreter', 'latex');
         exportgraphics(f,sprintf('../Figures/States%g_%gs.png', pCa, rds(j)),'Resolution',150)
     end
 
@@ -920,7 +923,6 @@ if exportRun
     % save('..\pca11modeldataDoubleStates.mat', 'Tarr', 'Farr')
 end
 
-try
 % tic
 aspect = 2;
 if plotInSeparateFigure
@@ -968,7 +970,7 @@ for j = max(rampSet):-1:1
     end
     hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
     set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
-    hm{j} = semilogx(Time{j},Force{j},'|-', 'linewidth',2, 'Color', colors(1, :)); 
+    hm{j} = semilogx(Time{j},Force{j},'-', 'linewidth',2.5, 'Color', colors(1, :)); 
     hph{j} = plot(nan, nan, 'x',Color=[1 1 1]); % just a placeholder
     % set(h.Cap, 'EdgeColorType', 'truecoloralpha', 'EdgeColorData', [h.Cap.EdgeColorData(1:3); 255*alpha])
     ym = max([ym Force{j}, datatables{j}.F']);
@@ -1128,167 +1130,3 @@ if exportRun
     exportgraphics(cf,sprintf('../Figures/ModelFitpCa%g.eps', pCa))
 end
 % toc
-return
-%%
-% zoomIns = [0 200 0 10;...
-%            0 20 0 15;...
-%            0 2 0 15;...
-%            0 .2 0 15;...
-%            0 .04 0 15;...
-%            ];
-
-clf;
-colors = lines(max(rampSet)+1);
-
-% max out of all
-ym = ceil( max(cell2mat(Force)) / 5 ) * 5;
-
-% prepare in advance so that it wont draw over my inset
-tile_semilogx = subplot(212);hold on;
-pos = get(tile_semilogx, 'Position');
-ylabel('Tension (kPa)')
-xlabel('Time (s)')
-set(gca,'Fontsize',14)
-title(sprintf('Force response to %.2g ML ramp-up at pCa=%g, costing %1.4e€', Lmax, pCa, cost), 'Parent',tile_semilogx);
-set(tile_semilogx, 'XLim', [-1 300]);
-set(tile_semilogx, 'YLim', [0 ym*1])
-
-% shift of peaks to have the same tail - just guessed
-% shift = [-94, -7.2, -0.35, 0];
-% based on pCa 11 shift in data
-shift = [5.4, 0.82, 0.22, 0.01] - [100 10 1 0.1];
-ymaxScale = 0;
-for j = max(rampSet):-1:1
-    if isempty(Force{j})
-        continue;
-    end
-% figure(j); clf; axes('position',[0.15 0.15 0.8 0.80]); hold on; box on;
-    % subplot(1, 3, j);hold on;
-%% primary plot - semilog
-    subplot(221)
-    semilogx(datatables{j}.Time-2,datatables{j}.F,'-','linewidth',2, 'Color', [colors(j+1, :), 0.3]);
-    hold on;
-    
-    yyaxis right;
-    semilogx(t_int{j},cumsum(Es{j}),'--','linewidth',2, 'Color', [colors(j+1, :), 0.3]);
-    yyaxis left;
-    
-    semilogx(Time{j},Force{j},'-', 'linewidth',1, 'Color', colors(j+1, :)*0.8); 
-    % semilogx(t_int{j},Es{j},':', 'linewidth',1, 'Color', colors(j+1, :)*0.9); 
-    axis([1e-2, 3e2, 0, ym]);  
-    set(gca,'Fontsize',14)
-    title('Tension response to muscle length ramp-up')
-    xlabel('Time (s)')
-    ylabel('Tension (kPa)')
-
-%% other view - shifted to see the tail overlap
-
-    subplot(222)
-    % Estimating the true offset: Fss = C*(Tss)^-alpha + Fss_true;
-    % Fss = Force_par{j}(end); % "steady state" at the end 
-    % tss = Time{j}(end) - rds(j);
-    % Fss_true = Fss - (4.22*tss^-0.21);
-    Fss_true = Force_par{j}(end);
-    Fss_true = Force{j}(end) - Force_par{j}(end);
-% shift(j) = 0;
-    loglog(datatables{j}.Time-2 + shift(j),datatables{j}.F - Fss_true,'-','linewidth',2, 'Color', [colors(j+1, :), 0.3]);
-    hold on;
-    loglog(Time{j} + shift(j),Force{j} - Fss_true,'-', 'linewidth',1, 'Color', colors(j+1, :)*0.8); 
-    % plot(Time{j} + shift(j),Force{j},styles{j}, 'linewidth',1, 'Color', colors(j+1, :)*0.8); 
-    
-    % semilogx(t_int{j},Es{j},':', 'linewidth',1, 'Color', colors(j+1, :)*0.9); 
-    % axis([1e-2, 1e2, 0, ym]);  
-    xlim([1e-2, 3e2]);
-    ymaxScale = max(ymaxScale, max(Force{j} - Fss_true));
-    yminScale = (Force{j}(end) - Fss_true); % this should be around the same
-    ylim([max(1e-2, 0.8*yminScale), 1.2*ymaxScale])
-    if j == 1
-        % only after the last one
-        legend('Ramp 10s (Data)', 'Ramp 10s (Model)', 'Ramp 1s (Data)', 'Ramp 1s (Model)', 'Ramp 0.1s (Data)', 'Ramp 0.1s (Model)');
-    end
-    % legend('Ramp 10s, shifted by -8.6s', 'Ramp 1s, shifted by -0.78', 'Ramp 0.1s' );
-
-    set(gca,'Fontsize',14)
-    title('Tension response to muscle length ramp-up: shifted peaks')   
-
-%% secondary plots - timebase. Need to cut out
-
-    plot(datatables{j}.Time-2,datatables{j}.F,'-','linewidth',2, 'Color', [colors(j+1, :), 0.15], Parent=tile_semilogx);
-    plot(Time{j},Force{j},'-', 'linewidth',1, 'Color', colors(j+1, :)*0.8, Parent=tile_semilogx);
-    plot(t_int{j},Es{j},'--|','linewidth',2, 'Color', [colors(j+1, :), 0.3], Parent=tile_semilogx);
-
-    % plot(t_int{j},Ftot_int{j},'r','linewidth',2.5);
-    % max out of all
-
-    
-    ylabel('Tension (kPa)')
-    xlabel('Time (s)')
-    % set(gca,'Xtick',0:50:200)
-    
-    % zoom-in inset
-    
-    w = pos(3)*0.18; h = pos(4)*0.5;
-    x = pos(1) + pos(3) - (j*1.3 - 0.3)*w; y = pos(2) + pos(4) - h;
-    axes('Position',[x, y, w, h]);hold on;
-    % axes('position',[0.5 0.5 0.4 0.4]); hold on; box on;
-    plot(datatables{j}.Time-2,datatables{j}.F,'-','linewidth',3, 'Color', [colors(j+1, :), 0.15]);
-    plot(t_int{j},Es{j},'--','linewidth',2, 'Color', [colors(j+1, :), 0.3]);
-    % plot(Time{j},Force{j}, 'r:', 'linewidth',2); 
-    plot(t_int{j},Ftot_int{j},'-','linewidth',2, 'Color', colors(j+1, :)*0.9);
-    ym_inset = ceil( max(Force{j}) / 10 ) * 10;
-    axis([0, rds(j)*2, 0, ym_inset]);  
-    set(gca,'Fontsize',14)    
-    
-end
-% cla;
-pos1 = get(subplot(221), 'Position');
-w = pos1(3)*0.45; h = pos1(4)*0.4;
-x = pos1(1) + pos1(3) - w; y = pos1(2) + pos1(4) - h;
-axes('Position',[x, y, w, h]);
-semilogx(PeakData(:, 1), PeakData(:, 2), 'ko', LineWidth=2);hold on;
-semilogx(PeakData(:, 1), PeakModel, 'x', 'MarkerEdgeColor', [1 1 1]*0.5, LineWidth=2, MarkerSize=8);
-axis([1e-1 1e2 0 max([ym PeakData(:, 2)'])])
-semilogx(PeakData(:, 1), PeakModel, '--', Color=[1 1 1]*0.5, LineWidth=1);
-legend('Peaks (Data)', 'Peaks (Model)', 'Location', 'southeast')
-%%
-h = annotation('textbox', [0.07 0.95 0 0], 'String', 'A)', 'FitBoxToText', false, 'FontSize', 32, 'FontWeight','bold');
-h = annotation('textbox', [0.5 0.95 0 0], 'String', 'B)', 'FitBoxToText', false, 'FontSize', 32, 'FontWeight','bold');
-h = annotation('textbox', [0.07 0.5 0 0], 'String', 'C)', 'FitBoxToText', false, 'FontSize', 32, 'FontWeight','bold');
-%%
-catch e
-    disp(e.message)
-end
-%%
-return;
-Tss =  (0.50e6)*0.225^8;
-figure(11); 
-loglog(Time{4}-0.1,Force{4}-Tss, ...
-       Time{3}-1.0,Force{3}-Tss, ...
-       Time{2}-10,Force{2}-Tss, Time{1}-10,Force{1}-Tss); 
-grid
-save('../modeltesting2.mat', 'Time', 'Force', 'Tss')
-% fig = gcf;
-% set(gcf, 'Position', [50 50 1200 700])
-% saveas(fig, ['..\Figures\Fig_' fig.Name], 'png')
-return;
-
-%% Overlap plots
-
-%% Draw plots
-figure(1001);clf;hold on;legend()
-% plot n.1: 
-colororder(jet(Ng));
-for n = 1:1:Ng
-    
-    plot(outStruct{1, 1}.pu(:, n), 'x-', LineWidth=2)
-    plot(outStruct{1, 2}.pu(:, n), 'x--', LineWidth=2)
-    plot(outStruct{1, 3}.pu(:, n), 'x:', LineWidth=2)
-end
-
-% plot u to s for different N
-
-% Visualize states in time?
-% / Passive resting fit - both semilog and linear?
-% / Shift the peaks so the tails overlap?
-% / Fit for maximal CA
-% Values of the Ca sensitive params - kA, KD?, kd

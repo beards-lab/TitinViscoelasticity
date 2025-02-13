@@ -51,7 +51,7 @@ w = 0.255; h = 0.85; x0 = 0.08; y0 = 0.11; gap = 0.003; centerShift = 0.06;
 % abs of range should be the same, just shifted
 xrng1 = [-10 19]; xrng2 = [-2 27]; xrng_add = [55 65]; 
 yrng1 = [0 15];
-xrng_ll = [5e-3 1e4];
+xrng_ll = [5e-3 1e3];
 yrng_ll = [0.75 14];
 % ylogtick = [1e0 1e1];
 xlintick = 0:10:20;xlinticklab  = [string(floor((xlintick(1):10:xlintick(end))/5)*5) ""];
@@ -247,7 +247,8 @@ for i_rds = [4 3 2 1]
     axes(a_r);
     
     % fit area
-    if limitfitrange
+    if false && limitfitrange
+        % disable the background fill
         l_fitarr = fill(max(1e-2, [t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds)), [0.1 0.1 60 60], [0.1 0.1 0.1]*5, 'FaceAlpha',0.14, EdgeColor='none');
     end
 
@@ -293,7 +294,8 @@ for i_rds = [4 3 2 1]
 
     
     % fit area - only pCa
-    if limitfitrange
+    if false && limitfitrange
+        % disable the backrgound fit area
         axes(a_cm)
         l_fitarr = fill([t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds), [0.1 0.1 60 60], [0.1 0.1 0.1]*2, 'FaceAlpha',0.14, EdgeColor='none');
     end
@@ -309,7 +311,7 @@ for i_rds = [4 3 2 1]
                 sprintf('$t_r = 1$ s,  $\\tau_i=%0.2f$ s', rampShift(3)),...
                 sprintf('$t_r = 0.1$ s,$\\tau_i=%0.2f$ s', rampShift(4))};
     
-    if ~limitfitrange
+    if true || ~limitfitrange
         leg_gr = [l_cm(valids) l_f];
         leg_txt = [legends(valids) sprintf('$%0.2f(t - t_r + \\tau_i)^{-%0.2f}$',a,b)];
         reorder = [1 3 5 2 4];

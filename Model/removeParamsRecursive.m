@@ -273,16 +273,21 @@ for i_pca = 1:size(modSet, 1)
     isolateRunCombinedModel([], [], params, pcax(i_pca), true, [1 2 3 4])
     leg = gca().Legend;
     leg.NumColumns = 1;
-    title(sprintf('pCa %g', pcax(i_pca)), Interpreter="latex");
+    if pcax(i_pca) == 4.4
+        title('pCa = 4.51', Interpreter="latex");
+    else
+        title(sprintf('pCa = %g', pcax(i_pca)), Interpreter="latex");
+    end
     xlim([1e-2 2e2]);
     ylim([0, ylims(i_pca)]);
     xticks([1e-2 1e0 1e2]);
+    legend(gca(), 'off');
     switch (i_pca)
         case {1, 2, 3}
         % top three
         % set(gca,'Xticklabel',[]);
         otherwise
-            xlabel('Time (s)', Interpreter="latex");
+            xlabel('t (s)', Interpreter="latex");
     end
     switch (i_pca)
         case {1, 4}
