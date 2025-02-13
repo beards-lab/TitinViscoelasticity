@@ -176,7 +176,7 @@ for i_rds = [4 3 2 1]
                 % prescribed rampShift - using the fit only to
                 % calculate the costs
                 tau0 = rampShift(i_rds);
-                pf = @(tau, x) a*max(1e-9, (x-rds(i_rds) + tau0)).^(-b) + tau*0;
+                pf = @(tau, x) a*max(1e-9, (x-rds(i_rds) + tau0)).^(-b) + tau*0;                
                 [ae, goodness] = fit(t_s(2:end)', Fint(2:end)', pf, 'StartPoint', [rds(i_rds)/10], 'Lower',[0], 'Upper',[rds(i_rds)]);
             else
                 % PowerFunction
@@ -197,7 +197,7 @@ for i_rds = [4 3 2 1]
         if useLogResidual
             residuals{i_rds, 2} = abs(log10(pf(ae.tau, t_s)) - log10(Fint)).^2;
         else
-            residuals{i_rds, 2} = (pf(ae.tau, t_s) - Fint).^2;
+            residuals{i_rds, 2} = (ae(t_s) - Fint').^2;
         end
         % c0 = sum(abs(log10(pf(ae.tau, t_s)) - log10(Fint)).^2);
         c0 = sum(residuals{i_rds, 2});
@@ -234,7 +234,7 @@ for i_rds = [4 3 2 1]
         return;
     end
 
-    pf = @(x) a*(x).^(-b);
+    
     if true || ~pCa
         % fit area right from the beginning
         t_ext = logspace(log10(1e-2), log10(1*60*60), 100);    
@@ -251,6 +251,7 @@ for i_rds = [4 3 2 1]
         l_fitarr = fill(max(1e-2, [t_s(1) t_s(end) t_s(end) t_s(1)]-rds(i_rds)), [0.1 0.1 60 60], [0.1 0.1 0.1]*5, 'FaceAlpha',0.14, EdgeColor='none');
     end
 
+    pf = @(x) a*(x).^(-b);
     pf_v = pf(t_ext);
     cl = lines(2);
     l_f = loglog(t_ext, pf_v, 'r:', ... %Color=cl(2, :)

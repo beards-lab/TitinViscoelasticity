@@ -68,13 +68,13 @@ g(ij(:,1:Ng))     = g(ij(:,1:Ng))     - UR + FR;
 
 % unfolding for pa states
 
-% attached states do not unfold now
-% if ~isempty(pa)
-%     NxNg = Nx*(Ng+1);
-%     UR = kDf*RU.*pa(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
-%     g(ij(:,2:(Ng+1))+NxNg) = g(ij(:,2:(Ng+1))+NxNg) + UR - FR;
-%     g(ij(:,1:Ng)+NxNg)     = g(ij(:,1:Ng)+NxNg)     - UR + FR;
-% end
+% TODO attached states do not ahve to unfold - ok simplification?
+if ~isempty(pa)
+    NxNg = Nx*(Ng+1);
+    UR = RU.*pa(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
+    g(ij(:,2:(Ng+1))+NxNg) = g(ij(:,2:(Ng+1))+NxNg) + UR - FR;
+    g(ij(:,1:Ng)+NxNg)     = g(ij(:,1:Ng)+NxNg)     - UR + FR;
+end
 
 if isa(V, 'function_handle')
     g(end) = V(t);

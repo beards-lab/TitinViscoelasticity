@@ -9,7 +9,7 @@ plotDetailedPlots = false;
 drawFig1 = false;
 exportRun = false;
 rerunFitting = false;
-% plotInSeparateFigure = false;
+plotInSeparateFigure = false;
 
 
 datasetname = 'pnbmava';
@@ -27,16 +27,20 @@ end
 if ~exist('mod', 'var')
     % Nice fit of everything    
     ms = [...
-       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
     ];
    pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
    i_pcax = find(pCa == pcax);
    mod = ms(i_pcax, :);
+
+   dropParams = [1 2 15 20 21 23];
+   modSel = setdiff(1:23, dropParams);
+   remainingParamNames = modNames(setdiff(1:23, dropParams));
 end
 if ~exist('drawPlots', 'var')
     drawPlots = true;
@@ -135,7 +139,6 @@ s  = (0:1:Nx-1)'.*ds; % strain vector
 Ng = 10; 
 % so all unfolded make mod(19) = Ng*delU slack, i.e. ~0.15 um. individual delU is about 0.01
 delU = mod(19)/Ng;
-
 
 
 % propose a function to kA = f(pCa)
@@ -468,7 +471,7 @@ maxPu = 0; maxPa = 0;
         % time_snaps = [0, 0.1, 1, 10, 30, 40, 100]
         % time_snaps = [0, rds(j), rds(j) + 30, 60, 120, 160];
         if strcmp(simtype, 'ramp')
-            time_snaps = [1e-3, rds(j), 0*1 + 2*rds(j), max(1000, rds(j)*10)];
+            time_snaps = [1e-3, rds(j), 0*1 + 2*rds(j), max(100, rds(j)*10)];
         elseif strcmp(simtype, 'sin')
             time_snaps = [Tc/2, Tc, 3*Tc/2, 2*Tc];
         end
@@ -919,14 +922,14 @@ end
 
 try
 % tic
+aspect = 2;
 if plotInSeparateFigure
     set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
     cf = clf;
-    
-    aspect = 2;
+     
     % normal size of 2-col figure on page is 7.2 inches
     % matlab's pixel is 1/96 of an inch
-    % f.Position = [300 200 7.2*96 7.2*96/aspect];
+    f.Position = [300 200 7.2*96 7.2*96/aspect];
     
     % f.Position = [300 200 7.2*96 7.2*96/aspect];
     % colors = lines(max(rampSet)+1); colors(1:end-1, :) = colors(2:end, :);
@@ -954,6 +957,7 @@ if plotInSeparateFigure
     % tile_semilogx = subplot(3, rws_l + rws_loglog, );hold on;
     tile_semilogx = axes('Position', tile_positions(1, :));hold on;
 else
+    f.Position = [300 200 7.2*96 7.2*96/aspect];
     tile_semilogx = gca();
     hold on;
 end
@@ -972,14 +976,20 @@ for j = max(rampSet):-1:1
     set(tile_semilogx, 'TickLabelInterpreter', 'latex');
     ylabel('$\Theta$ (kPa)', Interpreter='latex')
     
-    if rds(j) > 1
-        tp = [rds(j)*1.4, max(Force{j})*1.2];
-    else
-        tp = [rds(j)*0.95, max(Force{j})*0.95];
+    switch (rds(j))
+        case 0.1
+            % fastest
+            tp = [rds(j)*0.8, max(Force{j})*0.92];
+        case {1 10 100}
+            tp = [rds(j)*1.3, max(Force{j})*1.1 + 0.5];
     end
-    text(tp(1), tp(2), ...
+        
+    if plotInSeparateFigure
+        % too small otherwise
+        text(tp(1), tp(2), ...
         sprintf('$t_r$ = %g s', rds(j)),...
         'horizontalAlignment', 'right', VerticalAlignment='bottom', Interpreter='latex');    
+    end
 end
 xlim([1e-2, 160])
 ylim([0 ceil((ym)/5)*5])
@@ -1027,35 +1037,41 @@ tile_loglog = axes('Position', tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.
 %% best fit from FigFitDecayOverlay
  options = optimset('Display','iter', 'TolFun', 1e-4, 'Algorithm','sqp', 'UseParallel', true, ...
         'TolX', 0.0001, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
+ addpath ../DataProcessing
 
-if pCa > 10
+ if pCa > 10
     % x = [4.7976    0.2392    4.8212];
     x = [3.7242    0.2039    4.8357]; % data
-    x = [3.5021    0.2378    5.0506]; % model
-    if rerunFitting
+    x = [3.4642    0.2413    5.0916]; % model    
+    [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
+    
+    if rerunFitting && c > 3
+        %%
+        disp('Rerunning power law fit...');
         init = x;
         fitfunOpt = @(x) evalPowerFit(x, Farr, Tarr, false);
         x = fminsearch(fitfunOpt, init, options)
+        [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
     end
 
-    [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
 else
     % best overall fit
     % x = [15.1141    0.4346    4.5143];
     Phi_inf = 5.0506; % assumed from relaxed
-    x = [6.4651    0.2383  Phi_inf -24.2505];
-    % PEVK KO fit
-    x = [6.1750    0.2272    5.0506  -39.1079];
-    if rerunFitting
+    x = [6.4651    0.2383  Phi_inf -30];
+    % PEVK KO fit close enough
+    % x = [6.1750    0.2272    5.0506  -39.1079];
+    [c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true);
+
+    if rerunFitting && c > 0.04
+        %%
         init = x([1 2 4]);
-        addpath ../DataProcessing
+        
         fitfunOpt = @(opt) evalPowerFit([opt(1) opt(2) x(3) opt(3)], Farr, Tarr, false);
         opt = fminsearch(fitfunOpt, init, options)
         x([1 2 4]) = opt;
+        [c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true);
     end
-    % Tarr{1} = Time{1};
-    
-    cla;[c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true);
 end
 
 
@@ -1074,8 +1090,11 @@ for j = max(rampSet):-1:1
     set([h.Bar, h.Line], 'ColorType', 'truecoloralpha', 'ColorData', [h.Line.ColorData(1:3); 255])
     plot(Time{j},Force{j},'-', 'linewidth',2, 'Color', 'k'); 
     xlim([0 min(rds(j)*3, 160)]);
-    xl = xlim;
-    ylim(yl)
+    xl = xlim();
+    ylim(yl);
+    % ylim([0, inf]);
+    % yl = ylim();
+    % yl(2) = ceil(yl(2)/5)*5;
     yticks([0 20 40]);
     xticks([0 rds(j), rds(j)*2])
     if j == 4
@@ -1086,8 +1105,15 @@ for j = max(rampSet):-1:1
     xlabel('$t$ (s)', Interpreter='latex', HorizontalAlignment='left');
     set(sp, 'TickLength', [0.05 0.05]);
     set(sp, 'TickLabelInterpreter', 'latex')
-    tit = text(xl(2), min(yl(2)-5, max(Force{j})), sprintf('$t_r$ = %g', rds(j)), 'Interpreter', 'latex', ...
+    switch (rds(j))
+        case 0.1
+            % fastest at the bottom
+    tit = text(xl(2), 3, sprintf('$t_r$ = %g ', rds(j)), 'Interpreter', 'latex', ...
         HorizontalAlignment='right', VerticalAlignment='bottom');
+        otherwise
+    tit = text(xl(2), yl(2), sprintf('$t_r$ = %g ', rds(j)), 'Interpreter', 'latex', ...
+        HorizontalAlignment='right', VerticalAlignment='top');
+    end
     % tit.Position = tit.Position + [0 max(Force{j}) 0];
     % pos = sp.Position;
     % sp.Position = pos + [0 0 0.1 0];

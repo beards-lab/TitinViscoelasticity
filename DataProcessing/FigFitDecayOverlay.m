@@ -30,7 +30,7 @@ x = [3.7242    0.2039    4.8357];
 
 % log residuals, optimizes to no offset, logC = 0.83, cLin - 289
 % x = [8.7132    0.0755    0]
-
+%%
 if rerunFitting
     init = x;
     fitfunOpt = @(x) evalPowerFit(x, Farr, Tarr, false);
@@ -66,7 +66,7 @@ Farr = {};
 Tarr = {};
 for i_rd = 1:length(rds)
     % tb = readtable(['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv']);
-    tb = readtable(['..\Data\AvgMavaSetpCa4.4_' num2str(rds(i_rd)) 's.csv']);
+    tb = readtable(['..\Data\AvgMava_pCa4.4_' num2str(rds(i_rd)) 's.csv']);
     Farr{i_rd} = tb.F;
     Tarr{i_rd} = tb.Time - tb.Time(1); % start at zero
 end

@@ -1,6 +1,6 @@
 %Parameters to be potentially excluded one-by-one initially
-modNames = {'k_p(NoCa)', 'k_d', 'n_p', 'n_U', 'n_d', 'alphaU', 'k_{PEVK,A}', 'k_{PEVK,D}', 'k_p(highCa)', 'Fss', 'b', 'c', 'd', 'mu', 'alphaF_0','k_{PEVK,A} (low Ca)', 'k_{PEVK,D} (low Ca)', 'Lref', 'delU', ...
-        'AlphaU_pCa', 'Fss_pCa', 'kd_pCa', 'kDf'};
+modNames = {'k_p(NoCa)', 'k_d', 'n_p', 'n_U', 'n_d', '\alpha_U', 'k_{A}', 'k_{D}', 'k_p', '\Theta_{ss}', 'b', 'c', 'd', '\mu', 'alphaF_0','k_{PEVK,A} (low Ca)', 'k_{PEVK,D} (low Ca)', 'Lref', 'delU', ...
+        '\alpha_U', 'Fss_pCa', 'kd_pCa', 'kDf'};
 mod4 = [433, 4e+04, 2.37, 6.05, 2.74, 1.82e+06, 0.00601, 0.383, 4.37e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
 mod6_2 = [433, 4e+04, 2.02, 7.26, 2.62, 2.37e+06, 4.47e-05, 4.32, 476, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 2.89e+04, 0, ];
 mod11 = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
@@ -252,12 +252,17 @@ isolateRunCombinedModelAllpCas(optModsInLine, modSel, modSet, pcax, pcaSel, true
 %% test just monotonicity
 
 isolateRunCombinedModelAllpCas([], modSel, modSet, pcax, [])
-%% Test modSet
-figure(80085); clf;
-modSel = [4 6 7 9];
+%% Run all ramps and combinations - Test modSet
+pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];   
+cf = figure(80085); clf;
+aspect = 1.5;
+set(cf, 'Position', [500  300  7.2*96 7.2*96/aspect]);
 
+modSel = [4 6 7 9];
+ylims = [60, 54, 44, 32, 22, 16];
+tiledlayout('flow', 'TileSpacing','Compact')
 for i_pca = 1:size(modSet, 1)
-    %%
+    
     % i_pca = 5;
     % modSet(5, 7) = 1e-3;
     % modSet(5, 4) = modSet(6, 4);
@@ -266,7 +271,27 @@ for i_pca = 1:size(modSet, 1)
     params = modSet(i_pca, :);
     nexttile;hold on;
     isolateRunCombinedModel([], [], params, pcax(i_pca), true, [1 2 3 4])
-    title(sprintf('pCa %g', pcax(i_pca)));
+    leg = gca().Legend;
+    leg.NumColumns = 1;
+    title(sprintf('pCa %g', pcax(i_pca)), Interpreter="latex");
+    xlim([1e-2 2e2]);
+    ylim([0, ylims(i_pca)]);
+    xticks([1e-2 1e0 1e2]);
+    switch (i_pca)
+        case {1, 2, 3}
+        % top three
+        % set(gca,'Xticklabel',[]);
+        otherwise
+            xlabel('Time (s)', Interpreter="latex");
+    end
+    switch (i_pca)
+        case {1, 4}
+        % left two keep ylabel
+        otherwise
+        ylabel("")
+    end
+
+    set(gca, 'FontSize', 12);
 end
 
 %% plot interesting parameter values into one plot
@@ -283,28 +308,37 @@ for i_selpar = 1:length(selectedParams)
         % pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];        
         plot(-pcax, modSet(:, selectedParams(i_selpar)), 'x:', LineWidth=3);
     % end
-    title(modNames(selectedParams(i_selpar)));
 end
     % legend(modNames())
 %% Show the resulting matrix
-% for i = 1:size(modSet,1)
-%     fprintf('%10.4g ', modSet(i,:));  % Prints each row with 4 significant figures
-%     fprintf('\n');  % New line after each row
-% end
-  
+for i = 1:size(modSet,1)
+    fprintf('%10.4g ', modSet(i,:));  % Prints each row with 4 significant figures
+    fprintf('\n');  % New line after each row
+end
+
+%%
 ms = [...
-       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
-       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8     0.0039      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      5.797       2.74  8.658e+05   0.005381      0.383       4345       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.211       2.74  2.837e+06   0.005213      0.383       3998       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      6.526       2.74  3.184e+06   0.002699      0.383       3109       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37       7.96       2.74  1.807e+07  3.261e-05      0.383       1623       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      8.505       2.74  1.876e+07  3.478e-06      0.383      887.7       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
+       433      4e+04       2.37      9.035       2.74  2.668e+07        NaN        NaN      512.3       5.19          0       12.8          0      0.678          0        NaN        NaN          1      0.165        NaN        NaN      4e+04          0 
     ];
 %% PEVK KO
 
 ms_PevkKO = ms(1, :);
-ms_PevkKO(7) = 1e-9;
+ms_PevkKO(7) = 1e-12;
 isolateRunCombinedModel([], [], ms_PevkKO, [4.4], true, [1 2 3 4])
+
+%% experiment
+ms_mu0 = ms(end, :);
+% ms_mu0(1, 14) = 5e-1;
+isolateRunCombinedModel([], [], ms_mu0, [11], true, [4])
+%%
+ms_mu0 = ms(1, :);
+% ms_mu0(1, 14) = 5e-1;
+isolateRunCombinedModel([], [], ms_mu0, [4.4], true, [3])
 
 %% Fig 10 - sin refolding experiment
 drawPlots = true;
@@ -321,19 +355,28 @@ RunCombinedModel;
 
 
 %% fit params a func
-figure(8008135);clf;
+cf = figure(8008135);clf;
 fitHill(modSet, modSel(3), pcax)
-% tiledlayout('flow');
+tiledlayout('flow', TileSpacing='compact');
 % tiledlayout(2, 2)
-tiledlayout(1, 4)
-
+% tiledlayout(1, 4)
+modNames_modSel = modNames(modSel);
+modNames_units = {"-", "s^{-1}", "s^{-1}", "s^{-1}"}
 for i_ms = 1:length(modSel)
     nexttile();hold on;
     fitHill(modSet, modSel(i_ms), pcax);
-    ylabel(sprintf('%s', modNames{modSel(i_ms)}));
+    ylabel(sprintf('$%s (%s)$', modNames_modSel{i_ms}, modNames_units{i_ms}), Interpreter="latex");
     % title(sprintf('Fitting param %s', modNames{modSel(i_ms)}));
+    set(gca,'TickLabelInterpreter','latex')
 end
-fontsize(12, 'points')
+fontsize(12, 'points');
+aspect = 1.5;
+
+set(cf, 'Position', [500  300  7.2*96 7.2*96/aspect]);
+% set(cf, 'Position', [500  300  3.5*96 3.5*96/aspect]);
+K = [5.9076, 5.9544, 5.7493, 5.8618];
+K_mean = mean(K)
+K_std = std(K)
 %% Functions below
 function [bestModSel, bestParams, bestCost, combinations] = findOptimalParameters(modSel, params, optimizedParams, costThreshold, combinations)
     modNames = {'k_p(NoCa)', 'k_d', 'n_p', 'n_U', 'n_d', 'alphaU', 'k_{PEVK,A}', 'k_{PEVK,D}', 'k_p(highCa)', 'Fss', 'b', 'c', 'd', 'mu', 'alphaF_0','k_{PEVK,A} (low Ca)', 'k_{PEVK,D} (low Ca)', 'Lref', 'delU', ...
@@ -492,7 +535,7 @@ end
     mod = params;
     mod(modSel) = optMods;
     % cost = sum((optMods/10 - 2).^2);
-    plotInSeparateFigure = true;
+    plotInSeparateFigure = false;
     RunCombinedModel;
 end
 
@@ -521,7 +564,7 @@ hill_rising = @(p, x) (p(1) * x.^p(3)) ./ (p(2).^p(3) + x.^p(3)) + A_0;  % Risin
 hill_decreasing = @(p, x) p(1) ./ (1 + (x./p(2)).^p(3) + A_0);           % Decreasing Hill function
 
 % Perform curve fitting using nonlinear least squares
-options = optimset('Display', 'iter', 'TolFun', 1e-6);
+options = optimset('Display', 'none', 'TolFun', 1e-6);
 params_rising = lsqcurvefit(hill_rising, params0, x_data, y_data, [], [], options);
 params_decreasing = lsqcurvefit(hill_decreasing, params0, x_data, y_data, [], [], options);
 
@@ -564,7 +607,8 @@ if cutXaxis
 end
 %%
 legend(gca(), 'off');
-xlabel('pCa');
+set(gca,'TickLabelInterpreter','latex')
+xlabel('pCa', Interpreter='latex');
 % ylabel('Param value');
 
 % title(['Hill Function Fit - Best Model: ', best_fit]);
