@@ -17,11 +17,17 @@ end
 f = figure(2);clf;
 PlotFig2AndDie = true;
 addpath ../DataProcessing/
-AverageRamps
+try
+    AverageRamps
 
-if saveFigures
-    saveas(f, '../Figures/Figure2', 'png');
+    if saveFigures
+        saveas(f, '../Figures/Figure2', 'png');
+    end
+
+catch e
+    disp('Skipping figure 2, whichi requires postprocessed data. Start running LoadBakersExpPassiveCa.m on raw data.')
 end
+
 
 %% Figure 3
 % FigFitDecayOverlay
