@@ -6,7 +6,8 @@ if ~exist('drawPlots', 'var')
     drawPlots = true;
 end
 if ~exist('drawAllStates', 'var')
-    drawAllStates = false;
+    % indicates the ramp for which we plot the states
+    drawAllStates = 0;
 end
 if ~exist('plotDetailedPlots', 'var')
     plotDetailedPlots = false;
@@ -43,7 +44,8 @@ if ~exist('params', 'var')
    params = paramSet(i_pcax, :);
 end
 if ~exist('rampSet', 'var')
-    rampSet = [2 3 4];
+    rampSet = [1 2 3 4];
+    % rampSet = [4]; % fastest only
 end
 if ~exist('simtype', 'var')
     % simtype = 'sin';
@@ -99,10 +101,19 @@ for i_rd = 1:length(rds)
       end
 
   else
+      % file names are somewhat different
+      switch (pCa)
+          case 4.51
+            file_pCa = 4.4;
+          case 5.75
+            file_pCa = 5.8;
+          otherwise
+            file_pCa = pCa;
+      end
       if datasetname == "pnbonly"
-        filename = ['..\Data\AvgpCa' num2str(pCa) '_' num2str(rds(i_rd)) 's.csv'];
+        filename = ['..\Data\AvgpCa' num2str(file_pCa) '_' num2str(rds(i_rd)) 's.csv'];
       elseif datasetname == "pnbmava"
-        filename = sprintf('..\\Data\\AvgMava_pCa%0.1f_%gs.csv', pCa, rds(i_rd));     
+        filename = sprintf('..\\Data\\AvgMava_pCa%0.1f_%gs.csv', file_pCa, rds(i_rd));     
       end
   end
 
@@ -164,7 +175,8 @@ if drawFig1
     % sx = s(1):0.1:s(end);
     sx = s;
     % Fp = interp1(s, Fp(:, :), sx);
-    f = figure(3); 
+    % f = figure(3); 
+    f = gcf();
     set(gcf, 'Position', [500  300  7.2*96 3.5*96])
     gc = axes('Position', [0.1, 0.2, 0.35, 0.7]);
     pl1 = plot(sx, Fp(:, 1), 'k-', 'linewidth', 2); hold on;
@@ -225,7 +237,7 @@ if drawFig1
     % reconstruct Fp again without the NaN's
     % Fp = kp*(max(0,s-slack)/Lref).^(np); 
     % Fp(isnan(Fp() == NaN) = 0;
-
+    return;
 end
 %% Folding rate design and visualization
 % RF = alphaF*(max(0,delU-s))  % folding rates from state n+1 to n            
@@ -320,8 +332,6 @@ for j = rampSet
     
       velocities = {0, V};
       L0 = 0;%Lmax/2;
-      x_ = 0:Tc/100:Tc;
-      plot(x_, positions(x_), '-', x_, V(x_), x_, cumsum(V(x_)).*[1 diff(x_)], '--');
   end
   %% repeated - refolding
   % times = [-100, 0;0 Tend_ramp;Tend_ramp Tend_ramp + 40;... % normal ramp-up
@@ -360,7 +370,8 @@ for j = rampSet
     x0 = reshape([pu, pa],[2*(Ng+1)*Nx,1]);
   end
   x0 = [x0; L0]; 
-  opts = odeset('RelTol',1e-1, 'AbsTol',1e-1);          
+  % opts = odeset('RelTol',1e-1, 'AbsTol',1e-1);          
+  opts = odeset('RelTol',1e-2, 'AbsTol',1e-2);
   % assert(length(times) == length(velocities), 'Must be same length')
   t = []; x = [];
   for i_section = 1:size(times, 1)
@@ -393,17 +404,23 @@ maxPu = 0; maxPa = 0;
 % save relaxstatesenv
 % load relaxstatesenv
 % drawAllStates = true;
-    if drawAllStates
+    if drawAllStates == j
         % save current figure
         g = gcf;
         % open up a new one
         layout_x = 2 + (pCa < 10);
-        f = figure(50+pCa*10+j); clf; tiledlayout(layout_x, 4, 'TileSpacing','compact', Padding='loose');
+        if ~exist('statesFig')
+            statesFig = figure(50+pCa*10+j); clf;
+        else
+            figure(statesFig);
+        end
+        
+        tiledlayout(layout_x, 4, 'TileSpacing','compact', Padding='loose');
         fontsize(12, 'points')
         aspect = 2;
         % normal size of 2-col figure on page is 7.2 inches
         % matlab's pixel is 1/96 of an inch
-        f.Position = [300 200 7.2*96 7.2*96/aspect];
+        statesFig.Position = [300 200 7.2*96 7.2*96/aspect];
 
         % decide for timepoints
         % fixed time or fraction of ramp durations?
@@ -443,7 +460,7 @@ maxPu = 0; maxPa = 0;
     states_a{j}(i, 1:Ng+1) = sum(pa);
     strains{j}(i, 1:Nx) = sum(pu, 2);
 
-    if drawAllStates
+    if drawAllStates == j
         if any(ismember(i_time_snaps, i))
             % sum of all states, converting to %
             ss = (sum(pu(:)) + sum(pa(:)))*ds;
@@ -520,7 +537,7 @@ maxPu = 0; maxPa = 0;
             %% 2D shaded plot - attached
             if pCa < 10
                 aspect = 1.4; % make the plots rectangular for pca as well
-                f.Position = [300 200 7.2*96 7.2*96/aspect];
+                statesFig.Position = [300 200 7.2*96 7.2*96/aspect];
 
                 tl = nexttile(i_snap + 4);
                 % surface(s, 0:Ng, pa'*ds*100, 'EdgeColor',[1 1 1]*0.9);hold on;box on;                
@@ -542,14 +559,14 @@ maxPu = 0; maxPa = 0;
                 % xlim([0, s(end)]);
                 % shading(gca, 'interp')
                 % view(90, -90); 
-                clim([0 round(maxPa)]);
+                clim([0 round(maxPa, 1)]);
                 % xlabel('s'); ylabel('State');
                 % title(sprintf('U (%fs), S= %0.1f', t(i), sum(pu(:))));
                 if i_snap == 1
                     ylabel('$n$', Interpreter='latex')
                 elseif i_snap == length(i_time_snaps)
                     cb = colorbar;
-                    cb.Ticks = [0 round(maxPa)];
+                    cb.Ticks = [0 round(maxPa, 1)];
                     title(cb, 'Probability of attached $p_a$ (\%)',Interpreter='latex')
                     cb.Title.HorizontalAlignment = 'right';
                     set(tl, "YTick", [])
@@ -559,7 +576,7 @@ maxPu = 0; maxPa = 0;
                 xlabel('$s$ ($\mu$m)', Interpreter='latex');
                 box on;
                 fontsize(12, 'points');
-                set(tile_semilogx, 'TickLabelInterpreter', 'latex');
+                set(tl, 'TickLabelInterpreter', 'latex');
             end
             %% lollipop plot
             % % identify leading states
@@ -692,11 +709,12 @@ maxPu = 0; maxPa = 0;
   % calc force
   Force{j} = Force{j} + Force_par{j}; 
     
-  if drawAllStates
+  if drawAllStates == j
         nexttile([1 4]);
         semilogx(Time{j}, Force{j}, 'k-');hold on;
         scatter(Time{j}(i_time_snaps), Force{j}(i_time_snaps), 'ko', 'filled');
         xlim([1e-3 max(1300, rds(j)*10) + 30]);
+        xlim([1e-3 200]);
         % nexttile([1 1]);
         % loglog(Time{j}, Force{j});hold on;
         % scatter(Time{j}(i_time_snaps), Force{j}(i_time_snaps), 'o', 'filled');
@@ -706,7 +724,7 @@ maxPu = 0; maxPa = 0;
         ylabel('$\Theta$ (kPa)', Interpreter='latex')
         fontsize(12, 'points');
         set(tl, 'TickLabelInterpreter', 'latex');
-        exportgraphics(f,sprintf('../Figures/States%g_%gs.png', pCa, rds(j)),'Resolution',150)
+        % exportgraphics(f,sprintf('../Figures/States%g_%gs.png', pCa, rds(j)),'Resolution',150)
     end
 
   if any(isnan(Force{j}))
@@ -734,7 +752,8 @@ maxPu = 0; maxPa = 0;
   if strcmp(simtype, 'sin')  
   %% Plot sinusoidal outcome
     aspect = 2;
-    figure(900 + j*10 + round(pCa));clf;    tiledlayout(2,2, TileSpacing="compact");
+    % figure(900 + j*10 + round(pCa));clf;    
+    clf;tiledlayout(2,2, TileSpacing="compact");
     % figure(900935);
     % clf; tiledlayout('flow');
     set(gcf, 'Position', [500  300  7.2*96 7.2*96/aspect])
@@ -744,16 +763,15 @@ maxPu = 0; maxPa = 0;
     y = Force{j}(rng);
     y2 = Force{j} - Force_par{j};
     z = zeros(size(t));
-    col = linspace(0, t(end), length(t));   
-    x_ = @(t) t - floor(t/Tc)*Tc;
-    lw = 1
+    col = linspace(0, t(end), length(t)); 
+    lw = 1;
 
     % if exist('tl1', 'var')
         nexttile(1);hold on;
     % else
-        tl1 = nexttile;
+        % tl1 = nexttile;
     % end
-    plot(t, x, 'k', linewidth = lw);
+    plot(t, x, 'k', linewidth = 1);
     % plot(t, x, t, y);legend('Length', 'Force');
     xlabel('$t$ (s)', Interpreter='latex');    ylabel('$L$ ($\mu$m)', Interpreter='latex');
     ylim([0.95, 1.2])
@@ -774,19 +792,24 @@ maxPu = 0; maxPa = 0;
     cb = colorbar;  title(cb, 't (s)');
 
     % if exist('tl3', 'var')
-        % nexttile(3);
+        nexttile(3);
     % else    
-        tl3 = nexttile;
+        % tl3 = nexttile;
     % end
     % plot(x_(t), x, x_(t), y);legend('Length', 'Force');
     plot(t, y, 'k', linewidth = lw);
     xlabel('$t$ (s)', Interpreter='latex');
     ylabel('$\Theta$ (kPa)', Interpreter='latex');
     fontsize(12, 'points');
-    exportgraphics(gcf,sprintf('../Figures/FigHysteresis%g_%gs.png', pCa, rds(j)),'Resolution',150)
+    % exportgraphics(gcf,sprintf('../Figures/FigHysteresis%g_%gs.png', pCa, rds(j)),'Resolution',150)
   end
 end
 
+
+if strcmp(simtype, 'sin')
+    % for sin type its the end
+    return
+end
 % Get error for the whole ramp-up and decay
 t_endFreeware = zeros(1, 5); % time when we start counting the costs
 % alternatively, get the error from decay only
@@ -847,10 +870,10 @@ if exist('drawPlots', 'var') && ~drawPlots
     return;
 end
 
-Tarr = t_int;Farr = Ftot_int(1:4);
+Tarr = t_int;Farr = Ftot_int;
 if exportRun
     % save data for decay overlay loglog plot
-    Tarr = t_int;Farr = Ftot_int(1:4);
+    % Tarr = t_int;Farr = Ftot_int(1:4);
     % if pCa < 10
     %     save pcagraphingenv.mat
     % else
@@ -1034,7 +1057,7 @@ for j = max(rampSet):-1:1
     % ylim([0, inf]);
     % yl = ylim();
     % yl(2) = ceil(yl(2)/5)*5;
-    yticks([0 20 40]);
+    % yticks([0 20 40]);
     xticks([0 rds(j), rds(j)*2])
     if j == 4
         ylabel('$\Theta$ (kPa)', Interpreter='latex')

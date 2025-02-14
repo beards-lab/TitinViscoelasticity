@@ -1,6 +1,11 @@
 %Parameters to be potentially excluded one-by-one initially
 paramNames = {'\F_{ss}', 'n_ss' , 'k_p'    , 'n_p'    , 'k_d'   , 'n_d'    , '\alpha_U'  , 'n_U'    , '\mu'    , '\delta_U'    , 'k_{A}'   , 'k_{D}'   };
 
+% The following code is no longer used nor udpated. It uses an old format of parameters called mods. The order
+% of them no longer correspond to final parameter set. Use ParamConversion
+% for the conversion. 
+
+% Starting with identified parameter set for 
 mod4 = [433, 4e+04, 2.37, 6.05, 2.74, 1.82e+06, 0.00601, 0.383, 4.37e+03, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
 mod6_2 = [433, 4e+04, 2.02, 7.26, 2.62, 2.37e+06, 4.47e-05, 4.32, 476, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 2.89e+04, 0, ];
 mod11 = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
@@ -8,46 +13,14 @@ mod11 = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954 
 mod11_ = mod11;mod11_(9) = mod11(1);
 resultOptim = load('pCasResultOptim').resultOptim;
 
-%% optim the fit
-% isolateRunCombinedModel([], [], mod4, 4.4, true)
-% isolateRunCombinedModel([], [], mod11_, 11, true)
+%% Run a depth-first recursive search
+% Optimizing for a lowest calcium concentration and fastest ramp only. It is close enough to
+% relaxed, but still non-zero. 
+% the logic is to leave one out and try to fit. If the fit is good enough,
+% we go deeper and remove one other. 
 
-% for i = 1:length(resultOptim)
-%     resultOptim{i}.modSel = validCombos{i}.modSel;
-% end
-% save resultOptimValidCombos resultOptim
-numOpt = 3;
-options = optimset('Display','none', 'TolFun', 1e-2, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 100);
-
-for i = [2 3 5]
-    modSel = resultOptim{i}.modSel;
-    resultOptim{i}.mod11 = mod6_2;
-    evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, resultOptim{i}.mod11,  [11]);
-
-    for ijk = 1:numOpt
-        [x c] = fminsearch(evalLin, resultOptim{i}.mod11(modSel), options);
-        resultOptim{i}.mod11(modSel) = x;
-        resultOptim{i}.mod11_c = c;
-    end
-end
-%%
-for i = 1:length(resultOptim)
-    modSel = resultOptim{i}.modSel;
-    resultOptim{i}.mod6_2 = mod6_2;
-    evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, resultOptim{i}.mod6_2,  [6.2]);
-
-    for ijk = 1:numOpt
-        [x c] = fminsearch(evalLin, resultOptim{i}.mod6_2(modSel), options);
-        resultOptim{i}.mod6_2(modSel) = x;
-        resultOptim{i}.mod6_2_c = c;
-    end
-end
-
-%%
-% Specify your initial set of selected parameters
+% Specify the initial set of selected parameters
 modSel = [3 4 5 6 7 8 9];
-% mod4 = rand(1, 23);
-% modSel = [3 4 5 6];
 if ~exist('combinations', 'var')
     combinations = {};
 end
@@ -55,7 +28,8 @@ end
 tic
 [bestModSel, bestOptParams, bestCost, combinations] = findOptimalParameters(modSel, mod4, mod6_2, .4, combinations);
 toc
-%%
+% save ohwow;
+%% Load combos and sort
 combinations = load('ohwow').combinations;
 % Create arrays to hold the lengths of modSel and the costs
 lengths = cellfun(@(c) numel(c.modSel), combinations);
@@ -99,11 +73,7 @@ mod11_(exclModSel) = x;
 % run with all ramps
 isolateRunCombinedModel([], [], mod11_, 11, true, [2 3 4])
 
-% Output results
-% fprintf('Optimal parameter set: %s\n', mat2str(bestModSel));
-% fprintf('Optimized parameters: %s\n', mat2str(bestOptParams));
-% fprintf('Achieved cost: %.3f\n', bestCost);
-%% Test and list valid combos
+%% list valid combos and test the worst
 maxValidCost = 0.4;
 params = mod4;
 % Create arrays to hold the lengths of modSel and the costs
@@ -121,85 +91,89 @@ end
 params(validCombos{end}.modSel) = validCombos{end}.params;
 isolateRunCombinedModel([], [], params, 6.2, true)
 %% Optim all params for the valid combos
-if ~exist('resultOptim', 'var')
-    resultOptim = {};
-end
-numOpt = 4;
-options = optimset('Display','none', 'TolFun', 1e-2, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 50);
+% only exploratory
 
+% if ~exist('resultOptim', 'var')
+%     resultOptim = {};
+% end
+% numOpt = 4;
+% options = optimset('Display','none', 'TolFun', 1e-2, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 50);
+% 
+% 
+% for i = 1:length(validCombos)
+% 
+%     modSel = validCombos{i}.modSel;
+% 
+%     if length(resultOptim) < i || ~isfield(resultOptim{i}, 'mod6')
+%         resultOptim{i}.mod6 = mod6_2;
+%     end
+%     evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, mod4, [6]);
+% 
+%     for ijk = 1:numOpt
+%         [x c] = fminsearch(evalLin, resultOptim{i}.mod6(modSel), options);
+%         resultOptim{i}.mod6(modSel) = x;
+%         resultOptim{i}.mod6_c = c;
+%     end
+% 
+%     if ~isfield(resultOptim{i}, 'mod5_8')
+%         resultOptim{i}.mod5_8 = resultOptim{i}.mod6;
+%     end
+%     evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, mod4, [5.8]);
+%     for ijk = 1:numOpt
+%         [x c] = fminsearch(evalLin, resultOptim{i}.mod5_8(modSel), options);
+%         resultOptim{i}.mod5_8(modSel) = x;
+%         resultOptim{i}.mod5_8_c = c;
+%     end    
+% 
+%     if ~isfield(resultOptim{i}, 'mod5_5')
+%         resultOptim{i}.mod5_5 = resultOptim{i}.mod5_8;
+%     end
+%     evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, mod4,  [5.5]);
+%     for ijk = 1:numOpt
+%         [x c] = fminsearch(evalLin, resultOptim{i}.mod5_5(modSel), options);
+%         resultOptim{i}.mod5_5(modSel) = x;
+%         resultOptim{i}.mod5_5_c = c;
+%     end    
+% end
+% 
+% % save pCasResultOptim resultOptim
+% 
+% %% PLOT valid combos and parameter values
+% 
+% for ires = 1:length(resultOptim)
+% sqsum = sum([resultOptim{ires}.mod5_5_c, resultOptim{ires}.mod5_8_c, resultOptim{ires}.mod6_c].^2);
+%     fprintf('%g: sqsum %g. Costs 5.5: %g, Costs 5.8: %g, Costs 6: %g \n', ires, sqsum, ...
+%         resultOptim{ires}.mod5_5_c, resultOptim{ires}.mod5_8_c, resultOptim{ires}.mod6_c);
+% 
+% 
+%     if sqsum > 1
+%         continue;
+%     end
+% % figure(ires + 1000);clf;
+% modSet = [mod4;resultOptim{ires}.mod5_5;resultOptim{ires}.mod5_8;resultOptim{ires}.mod6;mod6_2;resultOptim{ires}.mod11];
+% pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
+% % tiledlayout(1,size(modSel, 2));
+% modSel = resultOptim{ires}.modSel;
+% for i = 1:size(modSel, 2)
+%     nexttile();
+%     plot(-pcax, modSet(:, modSel(i)), 'x-', LineWidth=3);
+%     title(paramNames{modSel(i)});
+% end
+% 
+% 
+% 
+% end
 
-for i = 1:length(validCombos)
+%% Try to optimize param per param while ensuring monotonicity
+% step 1: Optimize high-ca - 4.4 and 5.5 so that it is monotonous with pca 11 params
 
-    modSel = validCombos{i}.modSel;
-
-    if length(resultOptim) < i || ~isfield(resultOptim{i}, 'mod6')
-        resultOptim{i}.mod6 = mod6_2;
-    end
-    evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, mod4, [6]);
-
-    for ijk = 1:numOpt
-        [x c] = fminsearch(evalLin, resultOptim{i}.mod6(modSel), options);
-        resultOptim{i}.mod6(modSel) = x;
-        resultOptim{i}.mod6_c = c;
-    end
-
-    if ~isfield(resultOptim{i}, 'mod5_8')
-        resultOptim{i}.mod5_8 = resultOptim{i}.mod6;
-    end
-    evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, mod4, [5.8]);
-    for ijk = 1:numOpt
-        [x c] = fminsearch(evalLin, resultOptim{i}.mod5_8(modSel), options);
-        resultOptim{i}.mod5_8(modSel) = x;
-        resultOptim{i}.mod5_8_c = c;
-    end    
-    
-    if ~isfield(resultOptim{i}, 'mod5_5')
-        resultOptim{i}.mod5_5 = resultOptim{i}.mod5_8;
-    end
-    evalLin = @(curmod) isolateRunCombinedModel(curmod, modSel, mod4,  [5.5]);
-    for ijk = 1:numOpt
-        [x c] = fminsearch(evalLin, resultOptim{i}.mod5_5(modSel), options);
-        resultOptim{i}.mod5_5(modSel) = x;
-        resultOptim{i}.mod5_5_c = c;
-    end    
-end
-
-% save pCasResultOptim resultOptim
-
-%% PLOT valid combos and parameter values
-
-for ires = 1:length(resultOptim)
-sqsum = sum([resultOptim{ires}.mod5_5_c, resultOptim{ires}.mod5_8_c, resultOptim{ires}.mod6_c].^2);
-    fprintf('%g: sqsum %g. Costs 5.5: %g, Costs 5.8: %g, Costs 6: %g \n', ires, sqsum, ...
-        resultOptim{ires}.mod5_5_c, resultOptim{ires}.mod5_8_c, resultOptim{ires}.mod6_c);
-        
-
-    if sqsum > 1
-        continue;
-    end
-% figure(ires + 1000);clf;
-modSet = [mod4;resultOptim{ires}.mod5_5;resultOptim{ires}.mod5_8;resultOptim{ires}.mod6;mod6_2;resultOptim{ires}.mod11];
-pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
-% tiledlayout(1,size(modSel, 2));
-modSel = resultOptim{ires}.modSel;
-for i = 1:size(modSel, 2)
-    nexttile();
-    plot(-pcax, modSet(:, modSel(i)), 'x-', LineWidth=3);
-    title(paramNames{modSel(i)});
-end
-
-
-
-end
-
-%% Try to optimize param per param
 
 modSet = [mod4;mod4;mod4;mod4;mod4;mod11];
 pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
 
 % first round of optim
-% modSet = [mod4;mod4;mod11];
-% pcax = [4.4, 5.5, 11];
+modSet = [mod4;mod4;mod11];
+pcax = [4.4, 5.5, 11];
 pcaSel = [1 2]
 
 % Second round of optim - we already have those
@@ -211,9 +185,7 @@ mod5_5 = [433, 4e+04, 2.37, 6.27, 2.74, 3e+06, 0.00567, 0.383, 3.78e+03, 5.19, 0
 mod11 = [433, 4e+04, 2.37, 8.38, 2.55, 4.3e+06, 0.0171, 0.695, 442, 5.19, 0, 12.8, 0.0039, 0.678, 0, NaN, NaN, 1, 0.165, NaN, NaN, 4e+04, 0, ];
 % init for second round - now we use matrix of all to prevent
 % non-monotonic, but subselct only pca to optim
-modSet = [mod4;mod5_5;mod5_5;mod5_5;mod5_5;mod11];
-pcax = [4.4, 5.5, 5.75, 6, 6.2, 11];
-%% get the other bound right
+%% step 2: get the other bound right
 pcaSel = [5 6];
 % tweak pca11
 modSet(6, [7 8]) = [NaN, NaN];
@@ -336,11 +308,11 @@ ms_PevkKO = ms(1, :);
 ms_PevkKO(7) = 1e-12;
 isolateRunCombinedModel([], [], ms_PevkKO, [4.4], true, [1 2 3 4])
 
-%% experiment
+%% experiments for pca11
 ms_mu0 = ms(end, :);
 % ms_mu0(1, 14) = 5e-1;
 isolateRunCombinedModel([], [], ms_mu0, [11], true, [4])
-%%
+%% experiments for pca4
 ms_mu0 = ms(1, :);
 % ms_mu0(1, 14) = 5e-1;
 isolateRunCombinedModel([], [], ms_mu0, [4.4], true, [3])
@@ -355,11 +327,12 @@ plotInSeparateFigure = true;
 
 simtype = 'sin';
 pCa = 11;
+% this wont work now, need to adjust in RunCOmbinedModel from now on
 mod(15) = 2;
 RunCombinedModel;
 
 
-%% fit params a func
+%% fit params using a Hill func
 cf = figure(8008135);clf;
 fitHill(modSet, modSel(3), pcax)
 tiledlayout('flow', TileSpacing='compact');
@@ -545,83 +518,3 @@ end
 end
 
 
-function fitHill(modSet, modSel, pcax)
-cutXaxis = true;
-% Example data points (replace with actual values)
-x_data = pcax;
-y_data = modSet(:, modSel)';  % Dependent variable
-
-filter = ~isnan(y_data);
-% y_data = y_data(filter);
-% x_data = x_data(filter);
-y_data(~filter) = 0;
-
-%% Choose initial parameter guesses [A, K, n]
-A0 = max(y_data);     % Approximate max value
-A_0 = min(y_data);
-K0 = 6; %median(x_data);  % Midpoint estimate
-n0 = 100;               % Initial Hill coefficient
-
-params0 = [A0, K0, n0, A_0];
-
-% Define Hill function models
-hill_rising = @(p, x) (p(1) * x.^p(3)) ./ (p(2).^p(3) + x.^p(3)) + A_0;  % Rising Hill function
-hill_decreasing = @(p, x) p(1) ./ (1 + (x./p(2)).^p(3) + A_0);           % Decreasing Hill function
-
-% Perform curve fitting using nonlinear least squares
-options = optimset('Display', 'none', 'TolFun', 1e-6);
-params_rising = lsqcurvefit(hill_rising, params0, x_data, y_data, [], [], options);
-params_decreasing = lsqcurvefit(hill_decreasing, params0, x_data, y_data, [], [], options);
-
-% Plot results
-if cutXaxis
-    x_data(end) = 8;
-end
-
-% Generate fine x-values for plotting
-x_fine = linspace(min(x_data)*0.95, max(x_data)*1.05, 100);
-
-% Evaluate fitted models
-y_fit_rising = hill_rising(params_rising, x_fine);
-y_fit_decreasing = hill_decreasing(params_decreasing, x_fine);
-
-% Compute residuals
-residual_rising = norm(y_data - hill_rising(params_rising, x_data));
-residual_decreasing = norm(y_data - hill_decreasing(params_decreasing, x_data));
-
-% Determine best fit model
-if residual_rising < residual_decreasing
-    best_fit = 'Rising Hill Function';
-    best_params = params_rising;
-    y_best_fit = y_fit_rising;
-else
-    best_fit = 'Decreasing Hill Function';
-    best_params = params_decreasing;
-    y_best_fit = y_fit_decreasing;
-end
-
-scatter(x_data, y_data, 80, 'kx','linewidth', 3, 'DisplayName', 'Data Points');
-% plot(x_fine, y_fit_rising, 'b-', 'LineWidth', 2, 'DisplayName', 'Hill (Rising)');
-% plot(x_fine, y_fit_decreasing, 'g--', 'LineWidth', 2, 'DisplayName', 'Hill (Decreasing)');
-plot(x_fine, y_best_fit, 'k-', 'LineWidth', 1.5, 'DisplayName', ['Best Fit: ', best_fit]);
-
-if cutXaxis
-    % Set custom x-ticks with a break
-    xticks([4 5 6 7 8]);  % Include 7 and 11 for a break
-    xticklabels({'-4', '-5', '-6', '...', '11'}); % Add '...' as break
-end
-%%
-legend(gca(), 'off');
-set(gca,'TickLabelInterpreter','latex')
-xlabel('pCa', Interpreter='latex');
-% ylabel('Param value');
-
-% title(['Hill Function Fit - Best Model: ', best_fit]);
-
-% Display best-fit parameters
-disp(['Best Fit Model: ', best_fit]);
-disp(['A = ', num2str(best_params(1))]);
-disp(['K = ', num2str(best_params(2))]);
-disp(['n = ', num2str(best_params(3))]);
-
-end

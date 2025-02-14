@@ -1,12 +1,14 @@
+%% A bunch of scripts used in model identification. 
+% probably not working anymore
+
 close all
 clear;
 modNames = {'k_p(NoCa)', 'k_d', 'n_p', 'n_U', 'n_d', 'alphaU', 'k_{PEVK,A}', 'k_{PEVK,D}', 'k_p(highCa)', 'Fss', 'b', 'c', 'd', 'mu', 'alphaF_0','k_{PEVK,A} (low Ca)', 'k_{PEVK,D} (low Ca)', 'Lref', 'delU', ...
         'AlphaU_pCa', 'Fss_pCa', 'kd_pCa', 'kDf'};
 runOptim = false;
 
-%% Baseline
+%% Baseline - initial guess
 % Nice fit including pCa4.4 0.1s, predicting rest
-% params = [468, 3.83e+04, 2.3, 9, 2.33, 8.36e+06, 4.98, 84.9, 1.73e+03, 4.89, 1.01e-08, 12.8, 0.00389, 0.678, 0, NaN, NaN, 1, 0.175, NaN, NaN, 5.04e+04, 0, ];
 % new mava set - pCa 11
 params = [432.5020, 40000, 2.3741    8.8100    2.5458, 8360000, 0.0171    0.6954  838.5174    5.1935    0.0000,  12.8000    0.0039    0.6780         0  NaN       NaN    1.0000    0.1646       NaN      NaN  40000           0];
 % new mava set - pCa 4.4

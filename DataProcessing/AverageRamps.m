@@ -11,6 +11,7 @@
 % isMale = [1, 1, 0, 0, 1, 0];
 
 % using only the MAVA dataset
+addpath ../data
 dataset{1} = load('DataStruct20241010.mat');
 dataset{2} = load('DataStruct20241121.mat');
 dataset{3} = load('DataStruct20241212.mat');
@@ -23,6 +24,7 @@ leg_names = ["20241010 M","20241121 F","20241212 F","20241217 F","20241219 M","2
 AverageRamps_findFmax;
 
 %% Figure representative ramps
+
 i_dtst = 1;
 ts = [dataset{i_dtst}.dsc{1, 1}.datatable.t; ...
     dataset{i_dtst}.dsc{1, 1}.datatable.t(end) + dataset{i_dtst}.dsc{2, 1}.datatable.t ;...
@@ -36,7 +38,7 @@ Fs = [dataset{i_dtst}.dsc{1, 1}.datatable.F; ...
 
 
 ts = ts(1:189864); Ls = Ls(1:189864); Fs = Fs(1:189864);
-f = figure(1);clf;
+f = gcf();clf;
 % tiledlayout('flow', 'TileSpacing','none')
 % nexttile;
 aspect = 3;
@@ -96,7 +98,9 @@ gc.YAxis(1).TickLabel = [];
 % gc.Position = gc.Position + [0.05 0 0 0];
 gc.XTick = [0 0.25 0.5];
 
-% exportgraphics(f,'../Figures/RepreRamps.png','Resolution',150)
+if exist('PlotFig2AndDie', 'var') && PlotFig2AndDie
+    return;
+end
 
 %% cell for each ramp
 % ramp durations - indexes the _relaxed_
