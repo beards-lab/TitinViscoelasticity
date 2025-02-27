@@ -50,9 +50,9 @@ for i = 1:length(combinations)
         i, sprintf('%d ', combinations{i}.modSel), lengths(sortedIndices(i)), costs(sortedIndices(i)));
 end
 
-selectedCombo = combinations{16};
-figure(2);clf;
-isolateRunCombinedModel(selectedCombo.params, selectedCombo.modSel, mod4, 11, true)
+% selectedCombo = combinations{16};
+% figure(2);clf;
+% isolateRunCombinedModel(selectedCombo.params, selectedCombo.modSel, mod4, 11, true)
 
 %% Test a combination of parameters optim from pCa 4.4 to 11
 selectedCombo = combinations{16};
