@@ -270,6 +270,7 @@ for i_logtrace = 1:size(dsc, 1)
             ramp_shift_array{1} = [107.500,377.500,557.500,727.500,900.100,1308.500,1478.500,1658.600];
             ramp_shift_array{2} = [68-11.9, 139.100 - 8.9];
             ramp_shift_array{3} = [121.300,391.200,571.200,741.200,929.600-6.38,1021.200,1291.200,1471.200,1641.200,1811.200,2227.200,2402.200,2577.100,2752.200] - 8;
+            ramp_shift_array{4} = [121.300,391.200,571.200,741.200,929.600-6.38,1021.200,1291.200,1471.200,1641.200,1811.200,2227.200,2402.200,2577.100,2752.200] - 8;
         otherwise
             error('Unknown dataset, check this at line ~251');
     end
@@ -346,11 +347,12 @@ for i_logtrace = 1:size(dsc, 1)
         dsc{i_logtrace, i_ramp +1}.datatableZDCorr = rmpdt;
         dsc{i_logtrace, i_ramp +1}.ramp_shift = ramp_shift(i_ramp);
     end
-    plot(dsc{i_logtrace, 1}.datatable.t, dsc{i_logtrace, 1}.datatable.F - f_zd(dsc{i_logtrace, 1}.datatable.t), 'k:')
+    plot(dsc{i_logtrace, 1}.datatable.t, dsc{i_logtrace, 1}.datatable.F, 'g-', 'Linewidth', 0.5, 'DisplayName','Original');
+    plot(dsc{i_logtrace, 1}.datatable.t, dsc{i_logtrace, 1}.datatable.F - f_zd(dsc{i_logtrace, 1}.datatable.t), 'k:', 'DisplayName','Corrected')
     % plot(ds.datatable.t(is_slack), ds.datatable.F(is_slack), '.', 'LineWidth',2)
     % plot(ds.datatable.t, f_Fdt(ae.a, ae.b, ae.c, ds.datatable.t))
     % plot(ds.datatable.t, ds.datatable.F, ':')
-    legend([zdr, nozdr], [zeroDriftType ' removal'], 'Zero-value removal')
+    % legend([zdr, nozdr], [zeroDriftType ' removal'], 'Zero-value removal')
     axis tight;
 end
 

@@ -1,4 +1,6 @@
 rerunFitting = false;
+options = optimset('Display','iter', 'TolFun', 1e-4, 'Algorithm','sqp', 'UseParallel', true, ...
+        'TolX', 0.0001, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
 
 %% Low calcium data fit
 f = figure(3);
@@ -30,7 +32,7 @@ x = [3.7242    0.2039    4.8357];
 
 % log residuals, optimizes to no offset, logC = 0.83, cLin - 289
 % x = [8.7132    0.0755    0]
-%%
+%
 if rerunFitting
     init = x;
     fitfunOpt = @(x) evalPowerFit(x, Farr, Tarr, false);
@@ -111,8 +113,6 @@ init = [x0    0.2768    5.5530];
 rerunFitting = true;
 
 if rerunFitting
-    options = optimset('Display','iter', 'TolFun', 1e-4, 'Algorithm','sqp', 'UseParallel', true, ...
-        'TolX', 0.0001, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
 
     pcaFitFunFixB = @(x)evalPowerFit([x(1), x(2), x0, x(3)], Farr, Tarr, false, [], true);
     x = fminsearch(pcaFitFunFixB, [init(1) init(2) init(4)], options);

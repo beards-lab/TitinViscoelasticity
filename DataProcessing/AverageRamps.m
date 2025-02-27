@@ -24,7 +24,7 @@ leg_names = ["20241010 M","20241121 F","20241212 F","20241217 F","20241219 M","2
 AverageRamps_findFmax;
 
 %% Figure representative ramps
-
+if exist('PlotFig2AndDie', 'var') && PlotFig2AndDie
 i_dtst = 1;
 ts = [dataset{i_dtst}.dsc{1, 1}.datatable.t; ...
     dataset{i_dtst}.dsc{1, 1}.datatable.t(end) + dataset{i_dtst}.dsc{2, 1}.datatable.t ;...
@@ -99,6 +99,7 @@ gc.YAxis(1).TickLabel = [];
 gc.XTick = [0 0.25 0.5];
 
 if exist('PlotFig2AndDie', 'var') && PlotFig2AndDie
+% exportgraphics(f,'../Figures/RepreRamps.png','Resolution',150)
     return;
 end
 
@@ -317,7 +318,7 @@ for i_rds = 1:length(rds)
     Farr{i_rds} = outF*Fmax;
 
 end
-save('pca11data.mat', "Farr", "Tarr");
+save(['pca11data' dsName '.mat'], "Farr", "Tarr");
 peaks11 = peaks;
 %% peak sum up - run BEFORE AverageRampsCa
 peaks = peaks11;
