@@ -27,9 +27,12 @@ end
 
 %% model inputs settings
 if ~exist('pCa', 'var')
-    pCa = 11;
+    % pCa is one of these: [4.51, 5.5, 5.75, 6, 6.2, 11]
+    pCa = 11;    
 end
-if ~exist('params', 'var')
+if ~exist('params', 'var')    
+    paramNames = {'\F_{ss}', 'n_ss' , 'k_p'    , 'n_p'    , 'k_d'   , 'n_d'    , '\alpha_U'  , 'n_U'    , '\mu'    , '\delta_U'    , 'k_{A}'   , 'k_{D}'   };
+
     % Nice fit of everything    
     paramSet = [...
       5.19       12.8       4345       2.37      4e+04       2.74  8.658e+05      5.797      0.678      0.165   0.005381      0.383 
@@ -888,6 +891,7 @@ aspect = 2;
 if plotInSeparateFigure
     set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
     cf = clf;
+    % cf = gcf;
      
     % normal size of 2-col figure on page is 7.2 inches
     % matlab's pixel is 1/96 of an inch
@@ -928,10 +932,26 @@ for j = max(rampSet):-1:1
     if isempty(Force{j})
         continue;
     end
-    hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
-    set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
-    hm{j} = semilogx(Time{j},Force{j},'-', 'linewidth',2.5, 'Color', colors(1, :)); 
-    hph{j} = plot(nan, nan, 'x',Color=[1 1 1]); % just a placeholder
+    if ~exist('compareFig', 'var') || ~compareFig
+        hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
+        set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
+        hm{j} = semilogx(Time{j},Force{j},'-', 'linewidth',2.5, 'Color', colors(1, :)); 
+        
+        % if ~exist('ignoreLegends', 'var') || ~ignoreLegends
+        hl = legend([hd{max(rampSet)} hm{max(rampSet)}], ...
+        'Data',...    
+        'Model',...
+        NumColumns=3);
+        % end
+    
+        hl.ItemTokenSize = [30, 20];
+        hl.Box = 'off';
+
+    else
+        hm{j} = semilogx(Time{j},Force{j},'r-', 'linewidth',1.5); 
+    end
+    
+    % hph{j} = plot(nan, nan, 'x',Color=[1 1 1]); % just a placeholder
     % set(h.Cap, 'EdgeColorType', 'truecoloralpha', 'EdgeColorData', [h.Cap.EdgeColorData(1:3); 255*alpha])
     ym = max([ym Force{j}, datatables{j}.F']);
     set(tile_semilogx, 'TickLength', [0.0125 0.05]);
@@ -963,13 +983,6 @@ box on;
 %     'Data', 'Data', 'Data', 'Data', ...    
 %     'Model', 'Model', 'Model', 'Model',...
 %     NumColumns=3);
-hl = legend([hd{1} hm{1}], ...
-    'Data',...    
-    'Model',...
-    NumColumns=3);
-
-hl.ItemTokenSize = [30, 20];
-hl.Box = 'off';
 
 if ~plotDetailedPlots || ~plotInSeparateFigure
     return;
