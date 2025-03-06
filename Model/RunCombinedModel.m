@@ -156,7 +156,9 @@ kD   = params(12); 	% kD    PEVK detachment rate
 
 kDf = 0; % universal modifier
 L_0  = 1; % reference sarcomere length (um)
-alphaF_0 = 0; % refolding constant - refolding disabled
+if ~exist('alphaF_0', 'var')
+    alphaF_0 = 0; % refolding constant - refolding disabled
+end
 
 % Calculate proximal globular chain force Fp(s,n) for every strain and
 % value. 

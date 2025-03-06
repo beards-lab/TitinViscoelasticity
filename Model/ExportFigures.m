@@ -83,7 +83,7 @@ end
 clearvars -except saveFigures
 f = figure(6); clf;
 pCa = 4.51;
-% rampSet = [4];
+rampSet = [4];
 drawPlots = true;
 plotDetailedPlots = true;
 plotInSeparateFigure = true;

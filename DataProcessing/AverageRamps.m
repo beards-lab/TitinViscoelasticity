@@ -98,7 +98,6 @@ gc.YAxis(1).TickLabel = [];
 % gc.Position = gc.Position + [0.05 0 0 0];
 gc.XTick = [0 0.25 0.5];
 
-if exist('PlotFig2AndDie', 'var') && PlotFig2AndDie
 % exportgraphics(f,'../Figures/RepreRamps.png','Resolution',150)
     return;
 end
