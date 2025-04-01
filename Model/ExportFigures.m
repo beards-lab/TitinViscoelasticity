@@ -231,14 +231,46 @@ end
 %% Figure 11 - PEVK knockout
 clearvars -except saveFigures
 cf = figure(11);clf;
-drawPlots = true;
-% params from RunCombinedModel
+fontsize(12, 'points');
+
+pCa = 4.51;
+% standard best fit
 params = [ 5.19       12.8       4345       2.37      4e+04       2.74  8.658e+05      5.797      0.678      0.165   0.005381      0.383 ];
 % knock out the PEVK attachment
 params(11) = 1e-9;
-pCa = 4.51;
-plotDetailedPlots = true;
+
+% default plot
+drawPlots = true;
+plotDetailedPlots = false;
+plotInSeparateFigure = false;
 RunCombinedModel;
+fontsize(12, 'points');
+
+% Loop through each line and change it to dashed
+lines = findobj(gca, 'Type', 'Line');
+for i = 1:length(lines)
+    set(lines(i), 'LineStyle', '-.');
+end
+
+% NOW - optimized for PEVK knockout
+params = [5.19, 12.8, 7.56e+03, 2.75, 5.4e+04, 2.63, 1.87e+05, 5.85, 1.31, 0.165, 1e-09, 0.383, ];
+drawPlots = false;
+RunCombinedModel;
+
+% Add to plot
+for j = max(rampSet):-1:1
+    plot(Time{j},Force{j},':', 'linewidth',2, 'Color', 'k'); 
+end
+
+% get rid of extra legends
+leg = legend; 
+leg.Interpreter = "tex"
+leg.String{2} = "PEVK knockout"; leg.String{3} = "PEVK knockout - reoptimized";
+leg.String(4:end) = []; leg.NumColumns = 1;
+
+% general
+fontsize(12, 'points');
+aspect = 1.5;set(cf, 'Position', [500  300  7.2*96 7.2*96/aspect]);
 
 if saveFigures
     saveas(cf, '../Figures/Figure11', 'png');
