@@ -36,7 +36,7 @@ aspect = 1.5;
 f.Position = [300 200 7.2*96 7.2*96/aspect];
 x = [3.7242    0.2039    4.8357];
 % loads data cleaned and averaged in AverageRamps
-load("pca11data.mat");
+load("../data/pca11data.mat");
 [c rampShift] = evalPowerFit(x, Farr, Tarr, true, [], false);
 leg = gcf().Children(1);
 leg.Position = [0.4519    0.8571    0.5096    0.1359];
@@ -83,7 +83,7 @@ end
 clearvars -except saveFigures
 f = figure(6); clf;
 pCa = 4.51;
-rampSet = [4];
+% rampSet = [4];
 drawPlots = true;
 plotDetailedPlots = true;
 plotInSeparateFigure = true;

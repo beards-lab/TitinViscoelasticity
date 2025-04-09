@@ -89,7 +89,7 @@ xlim([-0.05, 0.5]);ylim(yl2);
 leg = legend('ML ($L/L_0$)', '$\Theta$ (kPa)', 'Interpreter','latex', 'FontSize',12, NumColumns=1, Location='southeast');
 leg.Position = leg.Position + [0 0.07 0 0];
 xlabel('$t$ (s)', 'Interpreter','latex');
-ylabel('Stress (kPa)', 'Interpreter','latex')
+ylabel('\textbf{Stress (kPa)}', 'Interpreter','latex')
 fontsize(12, 'points');
 gc = gca; 
 gc.YAxis(2).Color = [0 0 0];

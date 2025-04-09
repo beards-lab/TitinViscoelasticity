@@ -82,7 +82,7 @@ if plotResults == true
     % axes left adjacent
     if w2 > 0
         a_la = axes(fug, 'Position', [x0+w1+gap y0 w2 h], 'Xlim', xrng_add,'XTick',floor((xrng_add(1):10:xrng_add(end))/5)*5, 'YTick', [],... 
-            'YLim',yrng1, 'FontSize',fs, 'YScale','linear', 'TickLabelInterpreter','latex'); 
+            'YLim',yrng1, 'FontSize',fs, 'YScale','linear', 'TickLabelInterpreter','latex', 'XTickLabelRotation', 45); 
         hold on;box on;
     else
         % invalid, lets make it outside valid range
@@ -99,7 +99,7 @@ if plotResults == true
     
     if w2 > 0
         a_ca = axes('Position', [0.5-w/2 + w1 + gap + centerShift y0 w2 h], 'Xlim', xrng_add,'XTick',floor((xrng_add(1):10:xrng_add(end))/5)*5, 'YTick', [],... 
-        'YLim',yrng_ll, 'FontSize',fs, 'YScale','log', 'TickLabelInterpreter','latex');
+        'YLim',yrng_ll, 'FontSize',fs, 'YScale','log', 'TickLabelInterpreter','latex', 'XTickLabelRotation', 45);
         hold on; box on;
     else
         % invalid, lets make it outside valid range
@@ -357,7 +357,7 @@ for i_rds = [4 3 2 1]
             leg_gr = [l_f l_r(valids)];
             fit_txt = sprintf('$%0.2f(t - t_r + \\tau_i)^{-%0.2f}$',a,b);
             disp(fit_txt)
-            fit_txt = sprintf("$\\Theta \\sim t^{-%0.2g}$", b);
+            fit_txt = sprintf("$\\Theta \\sim t^{-%0.2f}$", b);
             leg_txt = [fit_txt legends(valids)];
             reorder = [5 4 3 2 1];
         % else
