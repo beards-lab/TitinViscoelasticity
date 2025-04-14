@@ -103,9 +103,9 @@ gc.XTick = [0 0.25 0.5];
 end
 
 %% cell for each ramp
+normalize = false;
 % ramp durations - indexes the _relaxed_
 rds = [100, 10, 1, 0.1];
-dsName = 'AvgRelaxedMAVASet';
 
 % Only final dataset with the new protocol
 relaxed{1} = [1, 1, 9;2, 1, 6;3, 1, 6;4,1,9;5, 1, 9;6, 1, 9];
@@ -129,10 +129,23 @@ relaxed{4} = [2, 1, 9;3, 1, 9;4, 1, 6;5,1,6;6, 1, 6];
 
 % PNB and MAVA datasets
 % relaxed{i_rds} = [i_dataset, i_condition, i_ramp]
+dsName = 'AvgRelaxedMAVASet';
 relaxed{4} = [1, 1, 6;2, 1, 6;3, 1, 6;4, 1, 6;5, 1, 6;6, 1, 6;];
 relaxed{3} = [1, 1, 7;2, 1, 7;3, 1, 7;4, 1, 7;5, 1, 7;6, 1, 7;];
 relaxed{2} = [1, 1, 8;2, 1, 8;3, 1, 8;4, 1, 8;5, 1, 8;6, 1, 8;];
 relaxed{1} = [1, 1, 9;2, 1, 9;3, 1, 9;4, 1, 9;5, 1, 9;6, 1, 9;];
+
+dsName = 'AvgRelaxedMAVASetBckwd';
+relaxed{1} = [1, 1, 2;2, 1, 2;3, 1, 2;4, 1, 2;5, 1, 2;6, 1, 2;];
+relaxed{2} = [1, 1, 3;2, 1, 3;3, 1, 3;4, 1, 3;5, 1, 3;6, 1, 3;];
+relaxed{3} = [1, 1, 4;2, 1, 4;3, 1, 4;4, 1, 4;5, 1, 4;6, 1, 4;];
+relaxed{4} = [1, 1, 5;2, 1, 5;3, 1, 5;4, 1, 5;5, 1, 5;6, 1, 5;];
+ 
+% dsName = 'AvgRelaxedMAVASet3'; % from the PNB+Mava treated series
+% relaxed{1} = [1, 3, 2;2, 3, 2;3, 3, 2;4, 3, 2;5, 3, 2;6, 3, 2;];
+% relaxed{2} = [1, 3, 3;2, 3, 3;3, 3, 3;4, 3, 3;5, 3, 3;6, 3, 3;];
+% relaxed{3} = [1, 3, 4;2, 3, 4;3, 3, 4;4, 3, 4;5, 3, 4;6, 3, 4;];
+% relaxed{4} = [1, 3, 5;2, 3, 5;3, 3, 5;4, 3, 5;5, 3, 5;6, 3, 5;];
 
 % %%
 % dtst = dataset{2}.dsc;
@@ -147,7 +160,9 @@ aspect = 1.5;
 f.Position = [300 200 3.5*96 3.5*96/aspect];
 
 clear peaks peaks_norm;
-
+if ~normalize
+    dsName = [dsName '_NotNorm'];
+end
 for i_rds = 1:length(rds)
     % sp =subplot(4, 4, (i_rds-1)*4 +  (1:2));cla;
     sp =subplot(4, 1, i_rds);cla;
@@ -175,7 +190,9 @@ for i_rds = 1:length(rds)
         rmp.t = rmp.t - 10;
         
         % base rebase not base
+        if ~normalize
         base_rel = 1;
+        else
         % base on absolute peak
         % base_rel = max(rmp.F);
         % base on steady state
@@ -186,6 +203,7 @@ for i_rds = 1:length(rds)
         base_rel = dataset_maxF(rampSet(i_logtrace, 1));
         % base on staeady state of the slowest ramp (in AverageRampsCa)
         % base_rel = dataset_ssF(i_logtrace);
+        end
 
         if isnan(base_rel) || base_rel == 0
             continue;
@@ -317,15 +335,13 @@ for i_rds = 1:length(rds)
     Farr{i_rds} = outF*Fmax;
 
 end
-save(['pca11data' dsName '.mat'], "Farr", "Tarr");
+save(['pca11data' dsName '.mat'], "Farr", "Tarr", "peaks");
 peaks11 = peaks;
-%% peak sum up - run BEFORE AverageRampsCa
-peaks = peaks11;
-peaks = peaks_norm;
+%%
 aspect = 2;
-f = figure(4);f.Position = [300 200 7.2*96 7.2*96/aspect];clf;
+% f = figure(4);f.Position = [300 200 7.2*96 7.2*96/aspect];clf;
 
-gc = axes('Position', [0.1 0.1 0.39 0.8], 'Box','on', 'BoxStyle','full');
+% gc = axes('Position', [0.1 0.1 0.39 0.8], 'Box','on', 'BoxStyle','full');
 % gc = axes('Position', [0.6 0.1 0.39 0.8], 'Box','on', 'BoxStyle','full', 'Color','r');
 
 % subplot(4, 4, [3 16]);cla;
@@ -336,12 +352,18 @@ peaks(peaks == 0) = NaN;
 % for x axis we go from fastest to slowest
 x_ax = length(rds):-1:1;
 
-boxplot(fliplr(peaks'), PlotStyle="traditional", Notch="off", Colors="k");hold on;
 
 % colors
 clin = lines(size(peaks, 2)+1);
 % BW only
 clin = repmat([0 0 0], [size(peaks, 2)+1, 1]);
+% blue only
+clin = repmat([0    0.4470    0.7410], [size(peaks, 2)+1, 1]);
+% Red only
+% clin = repmat([0.8500    0.3250    0.0980], [size(peaks, 2)+1, 1]);
+
+boxplot(fliplr(peaks'), PlotStyle="traditional", Notch="off", Colors=clin(end, :));hold on;
+
 clear lp;
 for i_pk = 1:size(peaks, 2)
     if all(isnan(peaks(:, i_pk))) || all (peaks(:, i_pk) == 0)
@@ -350,13 +372,13 @@ for i_pk = 1:size(peaks, 2)
         continue;
     end    
     % set(gca, 'colororderindex', 1);
-    lp = plot(x_ax', peaks(:, i_pk), '.:', 'MarkerSize',12, LineWidth=1.5, Color=clin(i_pk, :));
+    lp = plot(x_ax', peaks(:, i_pk), '.--', 'MarkerSize',12, LineWidth=1.5, Color=clin(i_pk, :));
     hold on;    
     % semilogx(rds, as(:, i_pk), 'x:', 'MarkerSize',12, LineWidth=0.5, Color=clin(i_pk, :));hold on;
 end
 % set(gca, 'YAxisLocation', 'right');
 % just for the legend
-lp(length(lp)+1) = plot(NaN, NaN, 's-',LineWidth=2, Color=clin(end, :), MarkerSize=5);
+lp(length(lp)+1) = plot(NaN, NaN, 's--',LineWidth=2, Color=clin(end, :), MarkerSize=5);
 % validLeg = ~cellfun(@isempty,leg);
 % %# remove empty cells
 % leg_cleared = leg(validLeg);
@@ -382,3 +404,100 @@ ylim([0 inf])
 set(gca, 'FontSize', 12);
 title('Peak stress - relaxed')
 % exportgraphics(f,'Figures/AvgpPeaksRelaxed.png','Resolution',150)
+%%
+
+% Data (example values - replace with your own)
+%% peak sum up - run BEFORE AverageRampsCa
+d = load("pca11dataAvgRelaxedMAVASet.mat");
+% d = load("pca11dataAvgRelaxedMAVASet_NotNorm.mat");
+% d = load("pca11dataAvgRelaxedMAVASet3.mat");
+% d = load("pca11dataAvgRelaxedMAVASet3_NotNorm.mat");
+% d = load("pca11dataAvgRelaxedMAVASetBckwd.mat" );
+
+peaks_1  = flipud(d.peaks);
+
+d = load("pca11dataAvgRelaxedMAVASet3.mat");
+% d = load("pca11dataAvgRelaxedMAVASet3_NotNorm.mat");
+% d = load("pca11dataAvgRelaxedMAVASetBckwd.mat" );
+% d = load("pca11dataAvgRelaxedMAVASetBckwd_NotNorm.mat" );
+
+legtext = {'Relaxed, preconditioned', 'Relaxed, PNB+Mava'};
+% legtext = {'Relaxed, not preconditioned', 'Relaxed, PNB+Mava', };
+
+peaks_2 = flipud(d.peaks);
+categories = {'0.1', '1', '10', '100'};
+
+
+
+% Initialize figure
+figure(333);clf;
+hold on;
+
+% Colors
+colors = lines(2);  % 2 distinct colors
+
+
+% Prepare for individual line plots across categories
+x_vals = 1:length(categories);
+markers = ["o", "s", "d", "^", "v", "h"];
+
+% Plot individual lines for Data1 and Data2 across categories
+for subj = 1:nSubjects
+    y_data1 = peaks_1(:, subj);  % 1 value per category
+    y_data2 = peaks_2(:, subj);
+    
+    plot(x_vals - 0.15, y_data1, markers(subj), 'Color', [0.5 0.5 1], 'MarkerFaceColor', [0.5 0.5 1]);
+    plot(x_vals + 0.15, y_data2, markers(subj), 'Color', [1 0.5 0.5], 'MarkerFaceColor', [1 0.5 0.5]);
+end
+
+
+% Plot boxcharts
+for i = 1:numel(categories)
+    % Get data
+    y1 = peaks_1(i, :);
+    y2 = peaks_2(i, :);
+    
+    % Box positions (group i with offsets for D1 and D2)
+    x1 = repmat(i - 0.15, 1, length(y1));  % shift left
+    x2 = repmat(i + 0.15, 1, length(y2));  % shift right
+    
+    % Plot boxcharts
+    b1 = boxchart(x1, y1, 'BoxFaceColor', colors(1,:), 'BoxWidth', 0.25);
+    b2 = boxchart(x2, y2, 'BoxFaceColor', colors(2,:), 'BoxWidth', 0.25);
+    
+    % Add only first to legend
+    if i == 1
+        set(get(get(b1,'Annotation'),'LegendInformation'), 'IconDisplayStyle', 'on');
+        set(get(get(b2,'Annotation'),'LegendInformation'), 'IconDisplayStyle', 'on');
+    else
+        set(get(get(b1,'Annotation'),'LegendInformation'), 'IconDisplayStyle', 'off');
+        set(get(get(b2,'Annotation'),'LegendInformation'), 'IconDisplayStyle', 'off');
+    end
+        % Statistical test (paired)
+    [~, p] = ttest(y1, y2);
+    
+    % Determine annotation
+    if p < 0.001
+        stars = '***';
+    elseif p < 0.01
+        stars = '**';
+    elseif p < 0.05
+        stars = '*';
+    else
+        stars = '';
+    end
+    % Plot asterisk annotation above the boxes
+    maxY = max([y1, y2]);
+    
+    % text(i, maxY + 0.8, sprintf('%.4f %s', p, stars), 'HorizontalAlignment', 'center', 'FontSize', 14, 'FontWeight', 'bold');
+end
+
+% Axes settings
+xlim([0.5, numel(categories) + 0.5]);
+xticks(1:numel(categories));
+xticklabels(categories);
+xlabel('Ramp duration (s)');
+ylabel('Peak Value (kPa)');
+title('Grouped Boxplots comparison');
+legend(legtext, 'Location', 'Best');
+grid on;

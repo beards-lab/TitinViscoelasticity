@@ -385,9 +385,60 @@ disp(['mod6 = [' sprintf('%1.3g, ', mod6(modSel)) '];'])
 [c0, cost_sap, cost_sam] = runSa(4.4, mod4, modSel)
 
 %% refolding
-% mod(15)
-params(15) = 2;
-evalCombined([], params, [], [4.4])
+
+figure(2); clf;
+datasetname = 'StitchingRelaxed_1_1_red.csv';
+pCa = 11;
+simtype = 'velocitytable_relaxed.csv';
+% simtype = 'velocitytable_relaxed_limhold.csv';
+% alphaF_0 = 0.00;
+% drawFig1 = true;
+drawAllStates = 0;
+time_snaps = [260, 360, 1000, 1190];
+RunCombinedModel;
+hold on;
+plot(Time{1}, Force_par{1}, '--', LineWidth=1)
+
+params = [5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN 0.1];
+
+modSel = [1 2 3 4 5 6 7 8 13];
+init = params(modSel);
+
+% Fss  = params(1 );		% Fss   Steady state level
+% n_ss = params(2 );		% n_ss  Steady state level exponent
+% kp   = params(3 );		% kp    proximal chain force constantkS   =
+% np   = params(4 );		% np    proximal chain force exponent
+% kd   = params(5 );		% kd    proximal chain force constant high Cabist
+% nd   = params(6 );		% nd    distal chain force exponent
+% alphaU  = params(7 );		% a_U   chain unfolding rate constant
+% nU   = params(8 );		% nU    unfolding rate exponent
+% % mu   = params(9 );		% mu    small enough not to affect the result
+% % delU = params(10)/Ng;  % delU 
+% kA   = params(11);     % kA   
+% kD   = params(12); 	% kD    PEVK detachment rate
+%%
+modSel = [1 2 7 8 13];
+init = params(modSel);
+evalLin = @(optMods) evalCombined(optMods, params, modSel, 11);
+evalLin(init)
+%%
+options = optimset('Display','iter', 'TolFun', 1e-3, 'Algorithm','sqp', 'TolX', 0.01, 'PlotFcns', @optimplotfval, 'MaxIter', 150);
+
+x = fminsearch(evalLin, params(modSel), options);
+optimparams = params;
+optimparams(modSel) = x;
+% save RelaxedAllOptimParams optimparams;
+%% save xxx
+% evalCombined([], optimparams, [], 11)
+%% refolding surrogateopt
+
+    options = optimoptions('surrogateopt','Display','iter', 'MaxTime', 6*60*60, 'UseParallel',true, 'PlotFcn', 'surrogateoptplot', 'InitialPoints', init', MaxFunctionEvaluations=1500);
+    % lb = T.lb./T.val; ub = T.ub./T.val;
+    lb = 0.1*init, ub = 10*init;
+    evalLin = @(optMods) evalCombined(optMods, params, modSel, 11)
+    [x,fval,exitflag,output,trials] = surrogateopt(evalLin, lb,ub, options);
+    optimparams = params;
+optimparams(modSel) = x;
 
 
 %% Run a SA
@@ -491,8 +542,8 @@ function totalCost = evalCombined(optMods, mod, modSel, pCas)
 
 
     %% pCa 4
-    if ismember(4.4, pCas)
-        pCa = 4.4;
+    if ismember(4.4, pCas) || ismember(4.51, pCas)
+        pCa = 4.51;
         plotOnBackground(drawPlots, pCa);
         % RunCombinedModel;
         cost = isolateRunCombinedModel(mod, pCa, drawPlots);
@@ -586,6 +637,13 @@ end
 function cost = isolateRunCombinedModel(mod, pCa, drawPlots)
 % just to isolate the script, so the variables can't intervene
     % drawPlots = true;
+    % datasetname = 'StitchingRelaxed_1_1_red.csv';
+    % pCa = 11;
+    % simtype = 'velocitytable_relaxed.csv';
+    rampSet = [4 3];
+    pCa = 4.51;
+    params = mod;
+
     RunCombinedModel;
 end
 

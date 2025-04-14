@@ -12,7 +12,7 @@ end
 L = max(0,x(end));
 
 % Calculate the un-attached chain velocities for every pu(s,n) entry
-deltaF = kd*max(0,(L-s)/L_0).^nd - Fp;
+deltaF = kd*sign(L-s).*abs((L-s)/L_0).^nd - Fp;
 Vp = deltaF/mu;
 
 ij = (1:Nx)' + Nx*(0:Ng); % matrix of Ng X Nx indices over all elements
@@ -56,11 +56,12 @@ UR = RU.*pu(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
 % refolding rate - speed up 
 if RF > 0
     FR = RF.*pu(ij(:,2:Ng+1)); % rate of probabilty transitions from n+1 to n states
+    FR(Fp(:, 2:11) > 0) = 0;
 else
     FR = 0;
 end
 
-if t > 9 
+if t > 150
     a = 1;
 end
 g(ij(:,2:(Ng+1))) = g(ij(:,2:(Ng+1))) + UR - FR;

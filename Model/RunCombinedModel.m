@@ -56,6 +56,30 @@ if ~exist('simtype', 'var')
     simtype = 'ramp';
 end
 
+if ~exist('datasetname', 'var')
+    datasetname = 'pnbmava';
+    % datasetname = 'StitchingRelaxed_1_1.csv';
+end
+if drawAllStates && ~exist('time_snaps', 'var')
+    % decide for timepoints
+    % fixed time or fraction of ramp durations?
+    % time_snaps = [0, 0.1, 1, 10, 30, 40, 100]
+    % time_snaps = [0, rds(j), rds(j) + 30, 60, 120, 160];
+    if strcmp(simtype, 'ramp')
+        time_snaps = [1e-3, rds(j), 0*1 + 2*rds(j), max(100, rds(j)*10)];
+    elseif strcmp(simtype, 'sin')
+        time_snaps = [Tc/2, Tc, 3*Tc/2, 2*Tc];
+    end
+end
+
+if ~exist('alphaF_0', 'var')
+    if length(params) >= 13
+        alphaF_0 = params(13); % refolding constant - refolding enabled
+    else
+        alphaF_0 = 0; % refolding constant - refolding disabled
+    end
+end
+
 %% preapre environment
 load SoHot.mat;
 % Cool colorbar creation, stored in mat file though
@@ -156,9 +180,6 @@ kD   = params(12); 	% kD    PEVK detachment rate
 
 kDf = 0; % universal modifier
 L_0  = 1; % reference sarcomere length (um)
-if ~exist('alphaF_0', 'var')
-    alphaF_0 = 0; % refolding constant - refolding disabled
-end
 
 % Calculate proximal globular chain force Fp(s,n) for every strain and
 % value. 
@@ -198,7 +219,7 @@ if drawFig1
     %     sx_20(n) = interp1(Fp(i_s:end, n), s(i_s:end), t0);
     % end
     % scatter(sx_20, repmat(t0, [1 Ng]), 'kx', linewidth=1.5)   
-    legend([pl1, pl2, pl3, plN(1)], '$\sigma_p(0,s)$', '$\sigma_p(1,s)$', '$\sigma_p(2,s)$', '$\sigma_p(3..14,s)$', 'Location', 'Northwest', Interpreter='latex');
+    legend([pl1, pl2, pl3, plN(1)], '$\sigma_p(0,s)$', '$\sigma_p(1,s)$', '$\sigma_p(2,s)$', '$\sigma_p(3..10,s)$', 'Location', 'Northwest', Interpreter='latex');
     
     set(gca, 'FontSize', 12)
     aspect = 1.5;
@@ -337,6 +358,14 @@ for j = rampSet
     
       velocities = {0, V};
       L0 = 0;%Lmax/2;
+  elseif strcmp(simtype, 'refolding')
+    % provide times and velocities
+  elseif strncmp(simtype, 'velocitytable_', 14)
+    % simtype = 'velocitytable_relaxed.csv'
+    vtb = readtable(['../data/' simtype ]);
+    times = [vtb.Time(1:end-1),vtb.Time(2:end)];
+    velocities = num2cell(vtb.Velocity);
+    L0 = 0.05; % that is 0.95 + 0.05 = 1
   end
   %% repeated - refolding
   % times = [-100, 0;0 Tend_ramp;Tend_ramp Tend_ramp + 40;... % normal ramp-up
@@ -374,7 +403,7 @@ for j = rampSet
   else
     x0 = reshape([pu, pa],[2*(Ng+1)*Nx,1]);
   end
-  x0 = [x0; L0]; 
+  x0 = [x0; L0(1)]; 
   % opts = odeset('RelTol',1e-1, 'AbsTol',1e-1);          
   opts = odeset('RelTol',1e-2, 'AbsTol',1e-2);
   % assert(length(times) == length(velocities), 'Must be same length')
@@ -385,10 +414,12 @@ for j = rampSet
       x = [x; x1(2:end, :)];
       % prep the init vector again
       x0 = x1(end,:);
+      if length(L0) >=i_section
+          x0(end) = L0(i_section);
+      end
   end
-  validRng = t >= 0;
-  t = t(validRng);x = x(validRng, :);
-
+  % validRng = t >= 0;
+  % t = t(validRng);x = x(validRng, :);
   %% ramp downm, wait and up again
   % Vdown = Lmax./0.1;
   % [t3,x3] = ode15s(@dXdT, t2(end)+[0 0.1],x2(end,:),[],Nx,Ng,ds,kA,kD,kd,Fp,RU,RF,mu,Lref,nd,-Vdown);
@@ -807,6 +838,38 @@ maxPu = 0; maxPa = 0;
     ylabel('$\Theta$ (kPa)', Interpreter='latex');
     fontsize(12, 'points');
     % exportgraphics(gcf,sprintf('../Figures/FigHysteresis%g_%gs.png', pCa, rds(j)),'Resolution',150)
+  elseif strncmp(simtype, 'velocitytable_', 14)
+      
+      %%
+      set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
+      cf = clf;
+      F_data{1} = interp1(datatables{1}.Time, datatables{1}.F, Time{1}); % total force interpolated
+      nexttile;
+      L_data{1} = interp1(datatables{1}.Time, datatables{1}.L, Time{1}); % total force interpolated
+      plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1});
+      
+      nexttile;
+      plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '--',lineWidth = 2 );
+      % plot(Time{j}, Force{j}, datatables{1}.Time, datatables{1}.F, Time{1}, F_data{1});
+
+      err =  nansum((F_data{1} - Force{1}').^2);
+
+      % findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=120);
+        [py, px] = findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=120);
+        % hold on;
+        sel = [2 3 4 5 6 8 9 11];
+        
+        % plot(px(sel), py(sel), 's', LineWidth=4);
+        
+        [pm] = findpeaks(Force{1}, Time{1}, MinPeakDistance=140);
+        
+        if length(pm) == length(sel)
+            peak_err = sum(((py(sel) - pm').^2))*3e3;
+        else
+            peak_err = 1e5;
+        end
+
+      cost = err + peak_err;
   end
 end
 
@@ -1019,16 +1082,22 @@ tile_loglog = axes('Position', tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.
  if pCa > 10
     % x = [4.7976    0.2392    4.8212];
     x = [3.7242    0.2039    4.8357]; % data
-    x = [3.4642    0.2413    5.0916]; % model    
+    x = [3.4642    0.2413    5.0916]; % model refit
+    x = [3.7364    0.2187    4.8357]; % model refit using the same Theta_inf
     [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
     
     if rerunFitting && c > 3
         %%
         disp('Rerunning power law fit...');
-        init = x;
-        fitfunOpt = @(x) evalPowerFit(x, Farr, Tarr, false);
-        x = fminsearch(fitfunOpt, init, options)
-        [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
+        % init = x;
+        % fitfunOpt = @(x) evalPowerFit(x, Farr, Tarr, false);
+        % x = fminsearch(fitfunOpt, init, options)
+        % [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
+        %% keep the Theta_inf
+        init = x([1, 2]);
+        fitfunOpt = @(p) evalPowerFit([p x(3)], Farr, Tarr, false);
+        p = fminsearch(fitfunOpt, init, options)
+        [c rspca] = evalPowerFit([p x(3)], Force, Time, 'loglogOnly', [], false);
     end
 
 else
@@ -1036,18 +1105,22 @@ else
     % x = [15.1141    0.4346    4.5143];
     Phi_inf = 5.0506; % assumed from relaxed
     x = [6.4651    0.2383  Phi_inf -30];
+    Phi_inf = 4.8357; % assumed from data
+    x = [6.3528    0.2136  Phi_inf -30];
     % PEVK KO fit close enough
     % x = [6.1750    0.2272    5.0506  -39.1079];
     [c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true);
 
     if rerunFitting && c > 0.04
         %%
-        init = x([1 2 4]);
+        init = x([1 2]);
         
-        fitfunOpt = @(opt) evalPowerFit([opt(1) opt(2) x(3) opt(3)], Farr, Tarr, false);
+        fitfunOpt = @(opt) evalPowerFit([opt(1) opt(2) x(3) x(4)], Farr, Tarr, false);
         opt = fminsearch(fitfunOpt, init, options)
-        x([1 2 4]) = opt;
+        x([1 2]) = opt;
         [c rspca] = evalPowerFit(x, Farr, Tarr, 'loglogOnly', [], true);
+        %% keep the theta_inf
+
     end
 end
 
