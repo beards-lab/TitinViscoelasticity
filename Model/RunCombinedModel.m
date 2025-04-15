@@ -66,7 +66,7 @@ if drawAllStates && ~exist('time_snaps', 'var')
     % time_snaps = [0, 0.1, 1, 10, 30, 40, 100]
     % time_snaps = [0, rds(j), rds(j) + 30, 60, 120, 160];
     if strcmp(simtype, 'ramp')
-        time_snaps = [1e-3, rds(j), 0*1 + 2*rds(j), max(100, rds(j)*10)];
+        time_snaps = [1e-3, 1, 2, 10];
     elseif strcmp(simtype, 'sin')
         time_snaps = [Tc/2, Tc, 3*Tc/2, 2*Tc];
     end

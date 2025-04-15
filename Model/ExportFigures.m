@@ -4,14 +4,19 @@ saveFigures = true;
 %% Figure 1
 % only the bottom two panels
 f = figure(101);clf;
+clearvars -except saveFigures
 pCa = 11;
 drawFig1 = true;
 RunCombinedModel;
 f = gcf;
 
+add_panel_labels(["", "(d)", "(c)"]);
+ 
 if saveFigures
-    saveas(f, '../Figures/Figure1_BC', 'png');
+    saveas(gcf, '../Figures/Figure1_BC', 'png');
+    saveas(gcf, '../Figures/Figure1_BC', 'fig');
 end
+
 %% Figure 2
 % exportgraphics(f,'../Figures/RepreRamps.png','Resolution',150)
 f = figure(2);clf;
@@ -19,15 +24,17 @@ PlotFig2AndDie = true;
 addpath ../DataProcessing/
 try
     AverageRamps
+    %%
+    add_panel_labels(["(b)", "(a)"], 15);
 
     if saveFigures
         saveas(f, '../Figures/Figure2', 'png');
+        saveas(f, '../Figures/Figure2', 'fig');
     end
 
 catch e
     disp('Skipping figure 2, whichi requires postprocessed data. Start running LoadBakersExpPassiveCa.m on raw data.')
 end
-
 
 %% Figure 3
 % FigFitDecayOverlay
@@ -41,22 +48,29 @@ load("../data/pca11data.mat");
 leg = gcf().Children(1);
 leg.Position = [0.4519    0.8571    0.5096    0.1359];
 
+add_panel_labels(["(b)", "", "(a)", "", "(c)"], 35);
+
 if saveFigures
+    f = gcf;
     saveas(f, '../Figures/Figure3', 'png');
+    saveas(f, '../Figures/Figure3', 'fig');
 end
 
 %% Figure 4
 clearvars -except saveFigures
 f = figure(4); clf;
 pCa = 11;
-
+alphaF_0 = 0.0;
 drawPlots = true;
 plotDetailedPlots = true;
 plotInSeparateFigure = true;
 RunCombinedModel;
 
+add_panel_labels(["(f)", "(e)", "(d)", "(c)", "(b)", "(a)"], 15);
+
 if saveFigures
     saveas(f, '../Figures/Figure4', 'png');
+    saveas(f, '../Figures/Figure4', 'fig');    
 end
 
 %% Figure 5
@@ -74,8 +88,12 @@ rampSet = [3];
 
 RunCombinedModel;
 
+% Move the labels manually
+add_panel_labels(["(b)", "", "", "", "(a)"], 15);
+
 if saveFigures
     saveas(statesFig, '../Figures/Figure5', 'png');
+    saveas(statesFig, '../Figures/Figure5', 'fig');
 end
 
 %% Figure 6
@@ -89,8 +107,11 @@ plotDetailedPlots = true;
 plotInSeparateFigure = true;
 RunCombinedModel;
 
+add_panel_labels(["(f)", "(e)", "(d)", "(c)", "(b)", "(a)"], 15);
+
 if saveFigures
     saveas(f, '../Figures/Figure6', 'png');
+    saveas(f, '../Figures/Figure6', 'fig');
 end
 
 %% Figure 7
@@ -109,8 +130,13 @@ rampSet = [3];
 
 RunCombinedModel;
 
+%% Move the labels manually
+add_panel_labels(["(c)", "", "", "","","","","(b)","(a)",], 15);
+statesFig = gcf;
+%%
 if saveFigures
     saveas(statesFig, '../Figures/Figure7', 'png');
+    saveas(statesFig, '../Figures/Figure7', 'fig');
 end
 
 %% Figure 8
@@ -156,8 +182,12 @@ for i_pca = 1:size(pcax, 2)
     set(gca, 'FontSize', 12);
 end
 
+add_panel_labels(["(f)", "(e)", "(d)", "(c)", "(b)", "(a)"], 15);
+
+
 if saveFigures
     saveas(cf, '../Figures/Figure8', 'png');
+    saveas(cf, '../Figures/Figure8', 'fig');
 end
 
 %% Figure 9
@@ -199,8 +229,11 @@ K = [5.9076, 5.9544, 5.7493, 5.8618];
 K_mean = round(mean(K), 2)
 K_std = round(std(K), 2)
 
+add_panel_labels(["(d)", "(c)", "(b)", "(a)"], 15);
+
 if saveFigures
     saveas(cf, '../Figures/Figure9', 'png');
+    saveas(cf, '../Figures/Figure9', 'fig');
 end
 %% Figure 10 - hysteresis - choose relaxed or high calcium? Can add refolding too.
 clearvars -except saveFigures
@@ -221,11 +254,15 @@ pCa = 4.51;
 % params(9) = 0.07;
 simtype = 'sin';
 params(9) = 5e-1;
+
 RunCombinedModel;
+
+add_panel_labels(["(b)", "(c)", "(a)"], 15);
 
 
 if saveFigures
     saveas(cf, '../Figures/Figure10', 'png');
+    saveas(cf, '../Figures/Figure10', 'fig');
 end
 
 %% Figure 11 - PEVK knockout
@@ -274,4 +311,131 @@ aspect = 1.5;set(cf, 'Position', [500  300  7.2*96 7.2*96/aspect]);
 
 if saveFigures
     saveas(cf, '../Figures/Figure11', 'png');
+    saveas(cf, '../Figures/Figure11', 'fig');
+end
+
+return
+%% Fig 12 appendix comparison of mava data - not part of the paper
+load("pca11dataAvgRelaxedMAVASet3.mat");
+load("pca11dataAvgRelaxedMAVASet.mat")
+load("pca11dataAvgRelaxedMAVASetBckwd.mat")
+
+x = [3.7242    0.2039    4.8357];
+% [c rampShift] = evalPowerFit(x, Farr, Tarr, true, [], false);
+% leg = gcf().Children(1);
+% leg.Position = [0.4519    0.8571    0.5096    0.1359];
+
+% init = x([1, 2]);
+% fitfunOpt = @(p) evalPowerFit([p x(3)], Farr, Tarr, false);
+% p = fminsearch(fitfunOpt, init, options)
+%
+clf;
+% [c rspca] = evalPowerFit([x(1) 0.15 x(3)], Farr, Tarr, 'loglogOnly', [], false);
+
+init = x;
+fitfunOpt = @(p) evalPowerFit(p, Farr, Tarr, false);
+p = fminsearch(fitfunOpt, init, options)
+[c rspca] = evalPowerFit(p, Farr, Tarr, 'loglogOnly', [], false);
+
+%% functions
+
+function labelSubplots(figHandle, labels)
+% Adds labels (A, B, C, ...) to subplots or UI panels in a figure.
+% figHandle: handle to the figure
+% labels: optional cell array of custom labels. If omitted, uses 'A', 'B', ...
+
+if nargin < 2
+    labels = arrayfun(@(k) char('A'+(k-1)), 1:numel(findall(figHandle, 'type', 'axes')), 'UniformOutput', false);
+end
+
+axList = findall(figHandle, 'type', 'axes');
+axList = flipud(axList);  % axes are stored in reverse creation order
+
+for k = 1:min(numel(axList), numel(labels))
+    ax = axList(k);
+    label = labels{k};
+
+    % Slightly shrink axes to make room
+    pos = get(ax, 'Position');
+    newPos = pos;
+    newPos(2) = pos(2) + 0.03;   % shift up a bit
+    newPos(4) = pos(4) - 0.03;   % shrink height
+    set(ax, 'Position', newPos);
+
+    % Add annotation text label in figure space
+    axUnits = get(ax, 'Units');
+    set(ax, 'Units', 'normalized');
+    pos = get(ax, 'Position');
+    set(ax, 'Units', axUnits);
+
+    x = pos(1) - 0.02;
+    y = pos(2) + pos(4) - 0.02;
+    annotation(figHandle, 'textbox', [x y 0.05 0.05], ...
+        'String', label, 'FontWeight', 'bold', ...
+        'EdgeColor', 'none', 'FontSize', 14, ...
+        'VerticalAlignment', 'top');
+end
+end
+
+function add_panel_labels(labelList, shrinkPixels, skipLabel)
+    % Adds panel labels (A, B, C, ...) to current figure's axes or tiles
+    % labelList: optional cell array of custom labels {'A','B','C',...}
+    % shrinkPixels: vertical space (in pixels) to subtract from each axis for label
+    % skipLabel: logical array indicating which axes to skip labeling (but still shrink)
+
+    if nargin < 1 || isempty(labelList)
+        labelList = arrayfun(@(x) char(64 + x), 1:26, 'UniformOutput', false); % Default: 'A', 'B', ...
+    end
+    if nargin < 2
+        shrinkPixels = 10; % Default shrink amount in pixels
+    end
+
+    fig = gcf;
+    figPos = getpixelposition(fig); % [left bottom width height] in pixels
+    figHeight = figPos(4);
+    figWidth = figPos(3);
+
+    allAxes = findall(fig, 'Type', 'axes');
+    % Ignore legends, colorbars etc.
+    allAxes = allAxes(~arrayfun(@(a) isa(a, 'matlab.graphics.illustration.Legend') || ...
+                                  strcmp(get(a, 'Tag'), 'Colorbar'), allAxes));
+
+    % Sort axes by position (top to bottom, left to right)
+    axPos = arrayfun(@(a) get(a, 'Position'), allAxes, 'UniformOutput', false);
+    axPos = cat(1, axPos{:});
+    [A, idx] = sortrows(axPos, [2,1]);  % Top to bottom, then left to right
+    allAxes = allAxes(idx);
+    labelList = labelList(idx);    
+    
+    if nargin < 3 || isempty(skipLabel)
+         skipLabel = cellfun(@isempty, labelList);
+    end
+
+    % Convert pixel height to normalized units
+    shrinkNorm = shrinkPixels / figHeight;
+
+    for i = 1:length(allAxes)
+        ax = allAxes(i);
+        pos = get(ax, 'Position');
+
+        % Shrink height by fixed normalized amount
+        newPos = pos;
+        newPos(4) = max(pos(4) - shrinkNorm, 0); % Don't let it go negative
+
+        set(ax, 'Position', newPos);
+
+        if ~skipLabel(i)
+            % Add label in the freed vertical space
+            labelHeightNorm = shrinkPixels / figHeight;
+            labelBox = [newPos(1) - 10 / figWidth, newPos(2) + newPos(4), 0.03, labelHeightNorm];
+
+            annotation('textbox', labelBox, ...
+                'String', labelList{i}, ...
+                'FontWeight', 'bold', ...
+                'FontSize', 14, ...
+                'EdgeColor', 'none', ...
+                'VerticalAlignment', 'bottom', ...
+                'HorizontalAlignment', 'left');
+        end
+    end
 end
