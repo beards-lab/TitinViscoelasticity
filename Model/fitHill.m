@@ -56,7 +56,7 @@ end
 scatter(x_data, y_data, 80, 'kx','linewidth', 3, 'DisplayName', 'Data Points');
 % plot(x_fine, y_fit_rising, 'b-', 'LineWidth', 2, 'DisplayName', 'Hill (Rising)');
 % plot(x_fine, y_fit_decreasing, 'g--', 'LineWidth', 2, 'DisplayName', 'Hill (Decreasing)');
-plot(x_fine, y_best_fit, 'k-', 'LineWidth', 1.5, 'DisplayName', ['Best Fit: ', best_fit]);
+plot(x_fine, y_best_fit, 'k-', 'LineWidth', 0.5, 'DisplayName', ['Best Fit: ', best_fit]);
 
 if cutXaxis
     % Set custom x-ticks with a break

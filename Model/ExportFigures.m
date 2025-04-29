@@ -92,6 +92,7 @@ RunCombinedModel;
 add_panel_labels(["(b)", "", "", "", "(a)"], 15);
 
 if saveFigures
+    statesFig = gcf;
     saveas(statesFig, '../Figures/Figure5', 'png');
     saveas(statesFig, '../Figures/Figure5', 'fig');
 end
@@ -132,9 +133,9 @@ RunCombinedModel;
 
 %% Move the labels manually
 add_panel_labels(["(c)", "", "", "","","","","(b)","(a)",], 15);
-statesFig = gcf;
 %%
 if saveFigures
+    statesFig = gcf;
     saveas(statesFig, '../Figures/Figure7', 'png');
     saveas(statesFig, '../Figures/Figure7', 'fig');
 end
@@ -186,6 +187,7 @@ add_panel_labels(["(f)", "(e)", "(d)", "(c)", "(b)", "(a)"], 15);
 
 
 if saveFigures
+    cf = gcf;
     saveas(cf, '../Figures/Figure8', 'png');
     saveas(cf, '../Figures/Figure8', 'fig');
 end
@@ -212,11 +214,12 @@ cf = figure(9);clf;
 tiledlayout('flow', TileSpacing='compact');
 
 modNames_modSel = paramNames(paramSel);
-modNames_units = {"-", "s^{-1}", "s^{-1}", "s^{-1}"}
+   % {'\alpha_U'}    {'n_U'}    {'k_p'}    {'k_{A}'}
+modNames_units = {"s$^{-1}$", "-", "kPa", "s$^{-1}$"}
 for i_ms = 1:length(paramSel)
     nexttile();hold on;
     fitHill(paramSet, paramSel(i_ms), pcax);
-    ylabel(sprintf('$%s (%s)$', modNames_modSel{i_ms}, modNames_units{i_ms}), Interpreter="latex");
+    ylabel(sprintf('$%s$ (%s)', modNames_modSel{i_ms}, modNames_units{i_ms}), Interpreter="latex");
     % title(sprintf('Fitting param %s', modNames{modSel(i_ms)}));
     set(gca,'TickLabelInterpreter','latex')
 end
@@ -229,7 +232,7 @@ K = [5.9076, 5.9544, 5.7493, 5.8618];
 K_mean = round(mean(K), 2)
 K_std = round(std(K), 2)
 
-add_panel_labels(["(d)", "(c)", "(b)", "(a)"], 15);
+add_panel_labels(["(d)", "(c)", "(b)", "(a)"], 15, [], [-25, 20]);
 
 if saveFigures
     saveas(cf, '../Figures/Figure9', 'png');
@@ -261,6 +264,7 @@ add_panel_labels(["(b)", "(c)", "(a)"], 15);
 
 
 if saveFigures
+    cf = gcf;
     saveas(cf, '../Figures/Figure10', 'png');
     saveas(cf, '../Figures/Figure10', 'fig');
 end
@@ -308,34 +312,81 @@ leg.String(4:end) = []; leg.NumColumns = 1;
 % general
 fontsize(12, 'points');
 aspect = 1.5;set(cf, 'Position', [500  300  7.2*96 7.2*96/aspect]);
-
+xlabel('$t$ (s)', Interpreter='latex')
 if saveFigures
     saveas(cf, '../Figures/Figure11', 'png');
     saveas(cf, '../Figures/Figure11', 'fig');
 end
 
 return
-%% Fig 12 appendix comparison of mava data - not part of the paper
-load("pca11dataAvgRelaxedMAVASet3.mat");
-load("pca11dataAvgRelaxedMAVASet.mat")
-load("pca11dataAvgRelaxedMAVASetBckwd.mat")
 
-x = [3.7242    0.2039    4.8357];
-% [c rampShift] = evalPowerFit(x, Farr, Tarr, true, [], false);
-% leg = gcf().Children(1);
-% leg.Position = [0.4519    0.8571    0.5096    0.1359];
+%% Graphical abstract figure - comparison relaxed / high ca in a single plot
 
-% init = x([1, 2]);
-% fitfunOpt = @(p) evalPowerFit([p x(3)], Farr, Tarr, false);
-% p = fminsearch(fitfunOpt, init, options)
-%
-clf;
-% [c rspca] = evalPowerFit([x(1) 0.15 x(3)], Farr, Tarr, 'loglogOnly', [], false);
+clearvars -except saveFigures
+cf = figure(101); clf;hold on;
+pCa = 11;
+alphaF_0 = 0.0;
+drawPlots = true;
+plotDetailedPlots = false;
+plotInSeparateFigure = false;
+RunCombinedModel;
 
-init = x;
-fitfunOpt = @(p) evalPowerFit(p, Farr, Tarr, false);
-p = fminsearch(fitfunOpt, init, options)
-[c rspca] = evalPowerFit(p, Farr, Tarr, 'loglogOnly', [], false);
+Time11 = Time; Force11 = Force;
+
+pCa = 4.51;
+clear params;
+RunCombinedModel;
+Time4 = Time;
+Force4 = Force;
+
+%% get any other line fort he legend - have to manually select that first though
+hNew = gco; 
+
+lgd = legend;
+existingHandles = lgd.PlotChildren;
+existingLabels = lgd.String;
+
+newHandles = [(existingHandles); hNew]; newLabels = [existingLabels(:); {'Relaxed'}];
+legend(newHandles, newLabels); xlabel('t (s)')
+
+if saveFigures
+    saveas(cf, '../Figures/Figure_GraphicalAbstract', 'png');
+    saveas(cf, '../Figures/Figure_GraphicalAbstract', 'fig');
+end
+
+%% Figure supporting figure 01 - Proof the rates are stabilized at higher Ca
+% we need more force to have the same transition rate
+
+% Run Relaxed
+clearvars -except saveFigures
+pCa = 11;
+RunCombinedModel;
+Fp_11 = Fp; RU_11 = RU;
+clearvars -except Fp_11 RU_11 saveFigures;
+
+% Run high-Ca
+pCa = 4.51;
+RunCombinedModel;
+Fp_4 = Fp; RU_4 = RU;
+
+% plot it
+cf = figure(102);clf; nexttile; hold on;
+for i_ng = 1:Ng
+    plot(Fp_11(:, i_ng), RU_11(:, i_ng), '-', 'DisplayName', sprintf('No Ca: State %d → %d', i_ng, i_ng+1))
+end
+
+for i_ng = 1:Ng
+    plot(Fp_4(:, i_ng), RU_4(:, i_ng), '--', 'DisplayName', sprintf('High Ca: State %d → %d', i_ng, i_ng+1))
+end
+
+xlabel('$\Theta$ (kPa)', Interpreter='latex'); ylabel(['$U_{n\rightarrow n+1}(n, s)$  (s$^{-1}$)'], Interpreter='latex');
+legend show; leg = legend;leg.Location = "eastoutside";
+
+if saveFigures
+    saveas(cf, '../Figures/Figure_S01_rates_vs_force', 'png');
+    saveas(cf, '../Figures/Figure_S01_rates_vs_force', 'fig');
+end
+
 
 %% functions
 
@@ -377,7 +428,7 @@ for k = 1:min(numel(axList), numel(labels))
 end
 end
 
-function add_panel_labels(labelList, shrinkPixels, skipLabel)
+function add_panel_labels(labelList, shrinkPixels, skipLabel, shift)
     % Adds panel labels (A, B, C, ...) to current figure's axes or tiles
     % labelList: optional cell array of custom labels {'A','B','C',...}
     % shrinkPixels: vertical space (in pixels) to subtract from each axis for label
@@ -411,6 +462,10 @@ function add_panel_labels(labelList, shrinkPixels, skipLabel)
          skipLabel = cellfun(@isempty, labelList);
     end
 
+    if nargin < 4
+         shift = [0, 0];
+    end
+
     % Convert pixel height to normalized units
     shrinkNorm = shrinkPixels / figHeight;
 
@@ -427,7 +482,7 @@ function add_panel_labels(labelList, shrinkPixels, skipLabel)
         if ~skipLabel(i)
             % Add label in the freed vertical space
             labelHeightNorm = shrinkPixels / figHeight;
-            labelBox = [newPos(1) - 10 / figWidth, newPos(2) + newPos(4), 0.03, labelHeightNorm];
+            labelBox = [newPos(1) - 10 / figWidth + shift(1)/figWidth, newPos(2) + newPos(4) + shift(2)/figHeight, 0.03, labelHeightNorm];
 
             annotation('textbox', labelBox, ...
                 'String', labelList{i}, ...
