@@ -358,6 +358,24 @@ for j = rampSet
     
       velocities = {0, V};
       L0 = 0;%Lmax/2;
+  elseif strcmp(simtype, 'sin0_25')
+      Tc = 1/0.25;
+      Lmax = 0.3511;
+      times = [-100, 10;10 40; 40, 80];  
+      positions = @(t)Lmax/2*sin(2*pi*(t-times(2, 1))/Tc);
+      % differentiating positions
+      V = @(t) 2/2*Lmax*pi/Tc *cos(2*pi*(t-times(2, 1))/Tc);
+    
+      % syms fpos(t);   % fpos(t) = @(t)Lmax*sin(2*pi*t/Tc);
+    
+      velocities = {0, V, 0};
+      L0 = 0.05;%Lmax/2;
+      %{
+        clf;
+        t = linspace(0, 10, 1000);
+        plot(t, positions(t)+, t, V(t));
+
+      %}
   elseif strcmp(simtype, 'refolding')
     % provide times and velocities
   elseif strncmp(simtype, 'velocitytable_', 14)
@@ -406,6 +424,7 @@ for j = rampSet
   x0 = [x0; L0(1)]; 
   % opts = odeset('RelTol',1e-1, 'AbsTol',1e-1);          
   opts = odeset('RelTol',1e-2, 'AbsTol',1e-2);
+  opts = odeset('RelTol',1e-4, 'AbsTol',1e-4);
   % assert(length(times) == length(velocities), 'Must be same length')
   t = []; x = [];
   for i_section = 1:size(times, 1)
@@ -785,7 +804,7 @@ maxPu = 0; maxPa = 0;
   % title(sprintf('pCa %0.1f, HR %0.0f bpm', pCa, HR));
   % figure(g);
 
-  if strcmp(simtype, 'sin')  
+  if strcmp(simtype(1:3), 'sin')  
   %% Plot sinusoidal outcome
     aspect = 2;
     % figure(900 + j*10 + round(pCa));clf;    
@@ -793,7 +812,7 @@ maxPu = 0; maxPa = 0;
     % figure(900935);
     % clf; tiledlayout('flow');
     set(gcf, 'Position', [500  300  7.2*96 7.2*96/aspect])
-    rng = Time{j} < 20;
+    rng = Time{j} < 200;
     t = Time{j}(rng)';
     x = Length{j}(rng) + 0.95;
     y = Force{j}(rng);
@@ -874,7 +893,7 @@ maxPu = 0; maxPa = 0;
 end
 
 
-if strcmp(simtype, 'sin')
+if strcmp(simtype(1:3), 'sin')
     % for sin type its the end
     return
 end
@@ -1083,7 +1102,7 @@ tile_loglog = axes('Position', tile_positions(2, :).*[1.05 1.8 1 1] + [0 0 0 -0.
     % x = [4.7976    0.2392    4.8212];
     x = [3.7242    0.2039    4.8357]; % data
     x = [3.4642    0.2413    5.0916]; % model refit
-    x = [3.7364    0.2187    4.8357]; % model refit using the same Theta_inf
+    % x = [3.7364    0.2187    4.8357]; % model refit using the same Theta_inf
     [c rspca] = evalPowerFit(x, Force, Time, 'loglogOnly', [], false);
     
     if rerunFitting && c > 3
