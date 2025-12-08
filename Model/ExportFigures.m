@@ -1,6 +1,6 @@
 %% Resimulate figures
 clear;
-saveFigures = true;
+saveFigures = false;
 %% Figure 1
 % only the bottom two panels
 f = figure(101);clf;

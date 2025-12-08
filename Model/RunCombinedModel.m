@@ -364,10 +364,7 @@ for j = rampSet
       times = [-100, 10;10 40; 40, 80];  
       positions = @(t)Lmax/2*sin(2*pi*(t-times(2, 1))/Tc);
       % differentiating positions
-      V = @(t) 2/2*Lmax*pi/Tc *cos(2*pi*(t-times(2, 1))/Tc);
-    
-      % syms fpos(t);   % fpos(t) = @(t)Lmax*sin(2*pi*t/Tc);
-    
+      V = @(t) 2/2*Lmax*pi/Tc *cos(2*pi*(t-times(2, 1))/Tc);    
       velocities = {0, V, 0};
       L0 = 0.05;%Lmax/2;
       %{
@@ -376,6 +373,15 @@ for j = rampSet
         plot(t, positions(t)+, t, V(t));
 
       %}
+  elseif strcmp(simtype, 'sin2_5')
+      Tc = 1/2.5;
+      Lmax = 0.3511;
+      times = [-100, 10;10 14; 14, 18];  
+      positions = @(t)Lmax/2*sin(2*pi*(t-times(2, 1))/Tc);
+      % differentiating positions
+      V = @(t) 2/2*Lmax*pi/Tc *cos(2*pi*(t-times(2, 1))/Tc);    
+      velocities = {0, V, 0};
+      L0 = 0.05;%Lmax/2; 
   elseif strcmp(simtype, 'refolding')
     % provide times and velocities
   elseif strncmp(simtype, 'velocitytable_', 14)

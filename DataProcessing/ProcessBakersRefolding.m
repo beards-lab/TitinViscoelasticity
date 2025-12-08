@@ -45,22 +45,34 @@ AllFiles{i} = ds;
 end
 
 %%
- 
+for i = 1:length(S)
+    fprintf('%d: %s\n', i, S(i).name);
+end
+%%
+close all;
+isel = [1 2 3 4 5];
+% isel = [32, 34, 31, 33];
 
-for i = 6:length(S)
+% for i = 1:length(S)
+for i = isel
+
 % i = 9;
- 
+  
+    figure(100+i);
     clf;
     
     nexttile;plot(AllFiles{i}.t, AllFiles{i}.F);
     title(sprintf('%s', AllFiles{i}.filename));
-    xlabel('$t$ (s)', Interpreter='latex');    ylabel('F (kPa)', Interpreter='latex');
+    xlabel('$t$ (ms)', Interpreter='latex');    ylabel('F (kPa)', Interpreter='latex');
     
     if ~isempty(AllFiles{i}.SL)
         nexttile;plot(AllFiles{i}.t, 2*AllFiles{i}.L, AllFiles{i}.t, AllFiles{i}.SL);
-        nexttile;plot(AllFiles{i}.L, AllFiles{i}.SL);
+        xlabel('$t$ (ms)', Interpreter='latex');    ylabel('2*ML (-), SL (um)', Interpreter='latex');
+        % nexttile;plot(AllFiles{i}.L, AllFiles{i}.SL);
     else
-        nexttile;plot(AllFiles{i}.t/1000, AllFiles{i}.L);
+        nexttile;plot(AllFiles{i}.t, 2*AllFiles{i}.L);
+        xlabel('$t$ (ms)', Interpreter='latex');    ylabel('2*ML (-)', Interpreter='latex');
+        
     end
 
  
@@ -84,13 +96,13 @@ for i = 6:length(S)
     cb = colorbar;  title(cb, 't (s)');
     disp('')
 
-    nexttile;
-    plot(t, y, t, [0 diff(x)./diff(t)*1000]);
-    nexttile;plot(y, [0 diff(x)./diff(t)*1000]);
+    nexttile;plot(t, y, t, [0 diff(x)./diff(t)*1000]);
+    % nexttile;plot(y, [0 diff(x)./diff(t)*1000]);
     % nexttile;plot(t, y, t, x*10);
 end
 
 %%
+clf;
 drawPlots = true;
 
 % one second period 
@@ -98,21 +110,24 @@ drawPlots = true;
     
 plotInSeparateFigure = true;
 % pCa 4.5
-% params = [5.19       12.8       4345       2.37      4e+04       2.74  8.658e+05      5.797      0.678      0.165   0.005381      0.383];
-% pCa = 4.51;
+params = [5.19       12.8       4345       2.37      4e+04       2.74  8.658e+05      5.797      0.678      0.165   0.005381      0.383];
+pCa = 4.51;
 % pCa 11
-params = [5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN, 1];
+% params = [5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN, 1];
 params(9) = 0.1;
-alphaF_0 = 1;
-pCa = 11;
+% alphaF_0 = 1;
+% pCa = 11;
 rampSet = 1;
 
 % params(9) = 0.07;
 simtype = 'sin0_25';
+simtype = 'sin2_5';
 % params(9) = 5e-1;
 
 RunCombinedModel;
-i = 23;
+%%
+i = 9;
+figure(i)
 nexttile(1);hold on;plot(AllFiles{i}.t/1000, AllFiles{i}.L);
 nexttile(2);hold on;plot(AllFiles{i}.L, AllFiles{i}.F);
 nexttile(3);hold on;plot(AllFiles{i}.t/1000, AllFiles{i}.F);
