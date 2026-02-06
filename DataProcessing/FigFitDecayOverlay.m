@@ -99,7 +99,7 @@ init = [x0    0.2768    5.5530];
 % best tail for fast(0.1 and 1)
 % Tarr{1} = {};Farr{1} = {};
 % Tarr{2} = {};Farr{2} = {};
-% init = [10.2511    0.3704    4.8400   -9.7544]
+init = [10.2511    0.3704    4.8400   -9.7544]
 
 % best tail for slow (10 and 100)
 % Tarr{3} = {};Farr{3} = {};
@@ -110,7 +110,7 @@ init = [x0    0.2768    5.5530];
 % init = [6.4546    0.357    x0  8.2928];
 
 
-rerunFitting = true;
+rerunFitting = false;
 
 if rerunFitting
 
