@@ -10,7 +10,13 @@ plot(AllFiles{i}.t(1:end -2), diff(diff(AllFiles{i}.L)));
 %%
 % Assumptions: 
 % L is your actuator signal (displacement/length)
-i = 5;
+
+% Active
+vtmode = 'active';i = 4; x_act = 7.85 + [-5 75 85 65 -14 35 65 50]*1e-3;
+
+% Relaxed
+vtmode = 'relaxed';i = 5; x_act = 0;
+
 t = AllFiles{i}.t/1000; % s
 L = AllFiles{i}.L(t<2000);
 t = t(t<2000);
@@ -30,8 +36,13 @@ v2 = 45;
 v3 = 45 + 0*37.55;
 v4 = 0.015;
 
+
+
 slack_durs = [0 5 10 20 50 100 200 500]*1e-3;
-offs = [0 0 49 173 223 293 319 407]*1e-3;
+% slack_durs = [0 5 10 20]*1e-3;
+
+offs = x_act + [0 0 49 173 223 293 319 407]*1e-3;
+
 % slack_durs = [];
 velocitytable = [0 ,0;
                 14.150, -v1;
@@ -73,13 +84,14 @@ dL = velocity(1:end-1) .* dT;
 
 % 3. Integrate to find Position (L)
 % We pad with a 0 at the start to align with L0
-Length = L0 + [0; cumsum(dL)];
+lengthtable = L0 + [0; cumsum(dL)];
+velocitytable = [velocitytable,lengthtable];
 
 % --- Plotting ---
 figure(2);clf;
 % subplot(2,1,1);
 
-plot(time, Length, 'r-o', 'MarkerFaceColor', 'r', 'MarkerSize', 4); hold on;
+plot(time, lengthtable, 'r-o', 'MarkerFaceColor', 'r', 'MarkerSize', 4); hold on;
 L_interp = interp1(t, L, time);
 plot(time, L_interp, 'b-o', 'MarkerFaceColor', 'r', 'MarkerSize', 4); hold on;
 plot(t, L, 'k', 'LineWidth', 1);
@@ -89,6 +101,21 @@ grid on;
 % figure(3); clf;
 % plot(time, [0 diff(Length)])
 
+% save the vt
+if strcmp(vtmode,'active')
+    fn = '..\data\velocitytable_doubleramp_active.csv';
+    
+elseif strcmp(vtmode,'relaxed')
+    fn = '..\data\velocitytable_doubleramp_relaxed.csv';
+    writematrix(velocitytable, '..\data\velocitytable_doubleramp_relaxed.csv');
+else
+    disp("I dunno, exiting")
+    return;
+end
+writematrix(["Time" "Velocity" "ML"], fn)
+writematrix(velocitytable, fn, WriteMode="append");
+
+return;
 %%
 % 2. Define a threshold to distinguish noise from actual movement
 % 10% of the expected constant velocity is usually a safe bet
@@ -152,3 +179,12 @@ subplot(2,1,2);
 plot(t, v_raw, 'b');
 title('Calculated Velocity (v)');
 ylabel('v = dL/dt'); grid on;
+
+%% Prefilter the data first
+datatable = readtable('..\Data\2025 09 19 Export\06 Log Double Ramps Relax PNB Mava.txt');    
+datatable.Properties.VariableNames = {'Time', 'L','F'};
+datatable.Time = datatables{1}.Time /1000;% convert to ms
+
+% get the slacks
+i_slackZones = find(velocitytable(:, 2) == 0 & velocitytable(:, 3) < 0.9);
+slackZones = [i_slackZones, i_slackZones+1];

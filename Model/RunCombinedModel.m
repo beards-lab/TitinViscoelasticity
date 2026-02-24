@@ -118,40 +118,50 @@ figInd = get(groot,'CurrentFigure'); % replace figure(indFig) later without stea
 
 % rds = fliplr([0.02 0.1, 1, 10 100]);
 rds = fliplr([0.1, 1, 10, 100]);
-% rds = fliplr([0.1, 10]);
-for i_rd = 1:length(rds)
-  if isinf(pCa) || pCa >= 10
-      if datasetname == "pnbonly"
-          filename = ['..\Data\AvgRelaxed_' num2str(rds(i_rd)) 's.csv'];
-      elseif datasetname == "pnbmava"
-          filename = ['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv'];
+if strcmp(simtype, 'ramp') % rds = fliplr([0.1, 10]);
+    for i_rd = 1:length(rds)
+      if isinf(pCa) || pCa >= 10
+          if datasetname == "pnbonly"
+              filename = ['..\Data\AvgRelaxed_' num2str(rds(i_rd)) 's.csv'];
+          elseif datasetname == "pnbmava"
+              filename = ['..\Data\AvgRelaxedMavaSet_' num2str(rds(i_rd)) 's.csv'];
+          end
+    
+      else
+          % file names are somewhat different
+          switch (pCa)
+              case 4.51
+                file_pCa = 4.4;
+              case 5.75
+                file_pCa = 5.8;
+              otherwise
+                file_pCa = pCa;
+          end
+          if datasetname == "pnbonly"
+            filename = ['..\Data\AvgpCa' num2str(file_pCa) '_' num2str(rds(i_rd)) 's.csv'];
+          elseif datasetname == "pnbmava"
+            filename = sprintf('..\\Data\\AvgMava_pCa%0.1f_%gs.csv', file_pCa, rds(i_rd));     
+          end
       end
-
-  else
-      % file names are somewhat different
-      switch (pCa)
-          case 4.51
-            file_pCa = 4.4;
-          case 5.75
-            file_pCa = 5.8;
-          otherwise
-            file_pCa = pCa;
+    
+      if exist([filename], "file")
+          datatables{i_rd} = readtable(filename);
+      else
+          datatables{i_rd} = [];
       end
-      if datasetname == "pnbonly"
-        filename = ['..\Data\AvgpCa' num2str(file_pCa) '_' num2str(rds(i_rd)) 's.csv'];
-      elseif datasetname == "pnbmava"
-        filename = sprintf('..\\Data\\AvgMava_pCa%0.1f_%gs.csv', file_pCa, rds(i_rd));     
-      end
-  end
-
-  if exist([filename], "file")
-      datatables{i_rd} = readtable(filename);
-  else
-      datatables{i_rd} = [];
-  end
-  
+      
+    end
+elseif strncmp(simtype, 'velocitytable_doubleramp_relaxed', 32)
+    datatables{1} = readtable('..\Data\2025 09 19 Export\06 Log Double Ramps Relax PNB Mava.txt');    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F'};
+    datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+elseif strncmp(simtype, 'velocitytable_doubleramp_active', 31)
+    datatables{1} = readtable('..\Data\2025 09 19 Export\05 Log Double Ramps Active PNB Mava.txt');    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F'};
+    datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+else
+    warning('Now what - do we need the datatables somehow?');
 end
-
 %% Model numerical parameters
 
 % half-sarcomere ramp height
@@ -389,7 +399,12 @@ for j = rampSet
     vtb = readtable(['../data/' simtype ]);
     times = [vtb.Time(1:end-1),vtb.Time(2:end)];
     velocities = num2cell(vtb.Velocity);
-    L0 = 0.05; % that is 0.95 + 0.05 = 1
+    i_L0 = find(ismember(vtb.Properties.VariableNames, 'ML'));
+    if isempty(i_L0)
+        L0 = 0.05; % that is 0.95 + 0.05 = 1
+    else
+        L0   = vtb{1, i_L0} - 0.95;
+    end
   end
   %% repeated - refolding
   % times = [-100, 0;0 Tend_ramp;Tend_ramp Tend_ramp + 40;... % normal ramp-up
@@ -434,6 +449,9 @@ for j = rampSet
   % assert(length(times) == length(velocities), 'Must be same length')
   t = []; x = [];
   for i_section = 1:size(times, 1)
+      if diff(times(i_section, :)) <= 0
+          continue;
+      end
       [t1,x1] = ode15s(@dXdT,times(i_section, :),x0,opts,Nx,Ng,ds,kA,kD,kd,Fp,RU,RF,mu,L_0,nd,kDf,velocities{i_section});
       t = [t; t1(2:end)];
       x = [x; x1(2:end, :)];
@@ -491,6 +509,8 @@ maxPu = 0; maxPa = 0;
             time_snaps = [1e-3, rds(j), 0*1 + 2*rds(j), max(100, rds(j)*10)];
         elseif strcmp(simtype, 'sin')
             time_snaps = [Tc/2, Tc, 3*Tc/2, 2*Tc];
+        elseif strncmp(simtype, 'velocitytable_', 14)
+            time_snaps = [times(6, 1) times(8, 1) times(10, 1) times(11, 1)];
         end
         % i_time_snaps = find(t > time_snaps)
     
@@ -785,7 +805,7 @@ maxPu = 0; maxPa = 0;
         ylabel('$\Theta$ (kPa)', Interpreter='latex')
         fontsize(12, 'points');
         set(tl, 'TickLabelInterpreter', 'latex');
-        % exportgraphics(f,sprintf('../Figures/States%g_%gs.png', pCa, rds(j)),'Resolution',150)
+        % exportgraphics(f,sprintf('../Figures/States%g_%gs.png', pCa, rds(j)),'Resolution',150)        
     end
 
   if any(isnan(Force{j}))
@@ -943,8 +963,8 @@ for j = rampSet
 
 end
 
-PeakModel = nan(1, length(PeakData));
-for j = 1:length(PeakModel)
+PeakModel = nan(1, length(PeakData(:, 2)));
+for j = 1:size(PeakModel)
     m = max(Force{j});
     if ~isempty(m)
         PeakModel(j) = m;
