@@ -1,6 +1,7 @@
 %% Titin refolding loading and processing
 
 S1 = dir('../data/2025 09 19 Export');
+S1 = dir('../data/2025 11 21 Export');
 
 S1 = S1(~[S1.isdir]);
 [~,idx] = sort({S1.name});
@@ -15,14 +16,16 @@ skipPlots = false;
 
 dsc = cell(0); % dataset structure cell array
 clear AllFiles;
-for i = 1:length(S)
-    fprintf('Processing %d..\n', i)
+processList = 1:length(S);
+processList = [7, 8, 9, 10, 11, 12, 13, 14];
+for i = processList
+    fprintf('Processing %d:%s..\n', i, S(i).name);
     ds = struct();
     ds.filename = S(i).name;
     folders = split(S(i).folder, '\');
     ds.folder = folders{end};
 
-
+% continue;
     datatable = readtable([S(i).folder '/' S(i).name], 'filetype', 'text', 'NumHeaderLines',4);
     if length(datatable.Properties.VariableNames) == 3
         datatable.Properties.VariableNames = {'t', 'L','F'};
@@ -51,6 +54,7 @@ end
 %%
 close all;
 isel = [1 2 3 4 5];
+isel = [7 8 9 10 11]
 % isel = [32, 34, 31, 33];
 
 % for i = 1:length(S)
@@ -125,6 +129,53 @@ simtype = 'sin2_5';
 % params(9) = 5e-1;
 
 RunCombinedModel;
+%% Are the protocols the same?
+figure(202);clf;
+% plot(AllFiles{9}.t, AllFiles{9}.L,AllFiles{11}.t, AllFiles{11}.L);
+n9 = length(AllFiles{9}.L);
+n11 = length(AllFiles{11}.L);
+plot(1:n9, AllFiles{9}.L,1:n11, AllFiles{11}.L);
+plot(AllFiles{11}.t(1:end-1)/1000, diff(AllFiles{11}.L)./diff(AllFiles{11}.t/1000))
+L = AllFiles{11}.L;
+t = AllFiles{11}.t/1000;
+
+
+% baseline to pos1
+v1 = 100;
+% pos1 to pos2
+v2 = -150;
+% pos2 to pos3
+v3 = 100;
+% pos3 to pos4
+v4 = -40;
+% pos4 to pos5
+v5 = 0.025;
+
+baseline = 0.95;
+pos1 = 1.175;
+pos2 = baseline;
+pos3 = pos1;
+pos4 = 0.8;
+pos5 = baseline;
+% get indexes of baseline to pos1 and pos3 based on the velocity dX/dt +
+% conversion from ms
+i_p1p3 = find(diff(diff(L)./diff(t) > 30));
+i_p1 = i_p1p3(1:2:end);
+i_p3 = i_p1p3(2:2:end);
+i_p2p4 = find(diff(diff(L)./diff(t) < -30));
+i_p2 = i_p2p4(1:2:end);
+i_p4 = i_p2p4(2:2:end);
+i_p5 = i_p2p4 + 1e4;
+
+hold on; plot(i_p1p3, L(i_p1p3), '*')
+
+% create velocitytable - time, velocity
+i = 1;
+vt = [t(i_p1(i)), v1
+    t(i_p1(i)) + (pos1-pos2)/v1, 0
+    t(i_p2(i)), v2
+    t(i_p2(i)) + (pos2-pos3)/v2, 0
+    ]
 %%
 i = 9;
 figure(i)

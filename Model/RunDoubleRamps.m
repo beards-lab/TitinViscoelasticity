@@ -1,11 +1,15 @@
 % RunDoubleRamps
-simtype = 'velocitytable_doubleramp_relaxed.csv';
+% simtype = 'velocitytable_doubleramp_relaxed.csv';
+simtype = 'velocitytable_doubleramp2_relaxed.csv';
 pCa = 11;
-simtype = 'velocitytable_doubleramp_active.csv';
+
+% simtype = 'velocitytable_doubleramp_active.csv';
+simtype = 'velocitytable_doubleramp2_active.csv';
 pCa = 4.51;
 
 % simtype = 'ramp';
 clear params;
+alphaF_0 = 0;
 
 rampSet = [1 2 3 4];
 rampSet = [1];
@@ -59,11 +63,11 @@ plot(data_time, data_force_corr);
 plot(sim_time, sim_force, LineWidth=2);
 [data_forcepeaks, i_data_forcepeaks] = findpeaks(data_force_corr,data_time,'MinPeakWidth',1.5e-3,'MaxPeakWidth',1, ...
               'MinPeakProminence',5, 'Annotate','extents','MinPeakDistance',25);
-sim_forcepeaks = findpeaks(sim_force,sim_time,'MinPeakWidth',1.5e-3,'MaxPeakWidth',100, ...
+sim_forcepeaks = findpeaks(sim_force,sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
               'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
 
 % just for the annotation
-findpeaks(sim_force,sim_time,'MinPeakWidth',1.5e-3,'MaxPeakWidth',100, ...
+findpeaks(sim_force,sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
               'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
 
 % data_forcepeaks = data_forcepeaks/max(data_forcepeaks);
@@ -88,4 +92,8 @@ xlabel('Refoldind duration (s)')
 
 
 
+%%
 
+    datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
+    datatables{1}.Time = datatables{1}.Time /1000;% convert to ms

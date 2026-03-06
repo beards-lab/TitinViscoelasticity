@@ -159,6 +159,14 @@ elseif strncmp(simtype, 'velocitytable_doubleramp_active', 31)
     datatables{1} = readtable('..\Data\2025 09 19 Export\05 Log Double Ramps Active PNB Mava.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F'};
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+elseif strncmp(simtype, 'velocitytable_doubleramp2_relaxed', 33)
+    datatables{1} = readtable('..\Data\2025 11 21 Export/03_Log_Relax_Refolding.txt');    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
+    datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+elseif strncmp(simtype, 'velocitytable_doubleramp2_active', 32)
+    datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
+    datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
 else
     warning('Now what - do we need the datatables somehow?');
 end
@@ -891,22 +899,30 @@ maxPu = 0; maxPa = 0;
       F_data{1} = interp1(datatables{1}.Time, datatables{1}.F, Time{1}); % total force interpolated
       nexttile;
       L_data{1} = interp1(datatables{1}.Time, datatables{1}.L, Time{1}); % total force interpolated
-      plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1});
+      plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1}); 
       
       nexttile;
-      plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '--',lineWidth = 2 );
+      plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '--',lineWidth = 2 );hold on;
       % plot(Time{j}, Force{j}, datatables{1}.Time, datatables{1}.F, Time{1}, F_data{1});
 
       err =  nansum((F_data{1} - Force{1}').^2);
 
       % findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=120);
-        [py, px] = findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=120);
+        [py, px] = findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=20, MinPeakHeight=10);
+        plot(px, py, '*');
+
+        nexttile;
+        plot(py(1:2:end));hold on;
+        plot(py(2:2:end));hold on;
         % hold on;
         sel = [2 3 4 5 6 8 9 11];
         
         % plot(px(sel), py(sel), 's', LineWidth=4);
         
-        [pm] = findpeaks(Force{1}, Time{1}, MinPeakDistance=140);
+        [pm pmx] = findpeaks(Force{1}, Time{1}, MinPeakDistance=20, MinPeakHeight=10);
+        
+        plot(pm(1:2:end));hold on;
+        plot(pm(2:2:end));hold on;
         
         if length(pm) == length(sel)
             peak_err = sum(((py(sel) - pm').^2))*3e3;
@@ -1042,7 +1058,7 @@ for j = max(rampSet):-1:1
     if isempty(Force{j})
         continue;
     end
-    if ~exist('compareFig', 'var') || ~compareFig
+    if ~exist('compareFig', 'var') || compareFig
         hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
         set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
         hm{j} = semilogx(Time{j},Force{j},'-', 'linewidth',2.5, 'Color', colors(1, :)); 
