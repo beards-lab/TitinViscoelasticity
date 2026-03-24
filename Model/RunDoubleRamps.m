@@ -94,6 +94,22 @@ xlabel('Refoldind duration (s)')
 
 %%
 
-    datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
+    datatables{1} = readtable('..\Data\2025 11 21 Export/0ms_refolding_Active.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+ds = datatables{1};
+
+datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
+    datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+    dss = datatables{1};
+
+%%
+% clf;
+% nexttile;
+clf; 
+hold on;
+
+    plot(dss.Time, dss.L, ds.Time+100-0.0154, ds.L,Time{1}, Length{1} + 0.95);
+    plot(ds.Time+100-0.0154, ds.F, dss.Time, dss.F, Time{1}, Force{1})
+    
