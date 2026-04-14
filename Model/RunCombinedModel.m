@@ -167,6 +167,13 @@ elseif strncmp(simtype, 'velocitytable_doubleramp2_active', 32)
     datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+elseif strcmp(simtype, 'velocitytable_slack')
+    loaddata = load('../data/bakers_slack8mM_all.mat');
+    clear datatables;
+    datatables{1} = array2table(loaddata.datatable);    
+    datatables{1}.Properties.VariableNames = {'Time', 'L','F'};
+    % datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+    
 else
     warning('Now what - do we need the datatables somehow?');
 end
@@ -404,7 +411,7 @@ for j = rampSet
     % provide times and velocities
   elseif strncmp(simtype, 'velocitytable_', 14)
     % simtype = 'velocitytable_relaxed.csv'
-    vtb = readtable(['../data/' simtype ]);
+    vtb = readtable(['../data/' simtype '.csv']);
     times = [vtb.Time(1:end-1),vtb.Time(2:end)];
     velocities = num2cell(vtb.Velocity);
     i_L0 = find(ismember(vtb.Properties.VariableNames, 'ML'));
@@ -894,6 +901,7 @@ maxPu = 0; maxPa = 0;
   elseif strncmp(simtype, 'velocitytable_', 14)
       
       %%
+      if drawPlots
       set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
       cf = clf;
       F_data{1} = interp1(datatables{1}.Time, datatables{1}.F, Time{1}); % total force interpolated
@@ -902,7 +910,7 @@ maxPu = 0; maxPa = 0;
       plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1}); 
       
       nexttile;
-      plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '--',lineWidth = 2 );hold on;
+      plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '-',lineWidth = 1);hold on;
       % plot(Time{j}, Force{j}, datatables{1}.Time, datatables{1}.F, Time{1}, F_data{1});
 
       err =  nansum((F_data{1} - Force{1}').^2);
@@ -931,6 +939,7 @@ maxPu = 0; maxPa = 0;
         end
 
       cost = err + peak_err;
+      end
   end
 end
 

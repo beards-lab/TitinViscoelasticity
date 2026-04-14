@@ -38,6 +38,8 @@ clear;clc;
 S1 = dir('../data/PassiveCaSrc2/20241217');
 S1 = dir('../data/PassiveCaSrc2/20241219');
 S1 = dir('../data/PassiveCaSrc2/20241220');
+S1 = dir('../ATP-depletion-and-heart-failure\data\03 27 2026 M\');
+
 
 S1 = S1(~[S1.isdir]);
 [~,idx] = sort({S1.name});
