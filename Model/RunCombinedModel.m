@@ -504,7 +504,7 @@ maxPu = 0; maxPa = 0;
         % open up a new one
         layout_x = 2 + (pCa < 10);
         if ~exist('statesFig')
-            statesFig = figure(50+pCa*10+j); clf;
+            statesFig = figure(50+round(pCa*10)+j); clf;
         else
             figure(statesFig);
         end
