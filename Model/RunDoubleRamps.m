@@ -1,4 +1,5 @@
 % RunDoubleRamps
+clear
 % simtype = 'velocitytable_doubleramp_relaxed.csv';
 simtype = 'velocitytable_doubleramp2_relaxed.csv';
 pCa = 11;
@@ -43,7 +44,7 @@ data_time = datatables{1}.Time;
 i_zeropoints = data_length < -0.1;
 data_force0 = data_force(i_zeropoints);
 data_force0Time = datatables{1}.Time(i_zeropoints);
-data_force_corr = data_force - sf(data_time);
+data_force_corr = data_force;% - sf(data_time);
 sim_time = Time{1};
 sim_force = Force{1};
 
