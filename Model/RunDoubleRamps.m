@@ -1,12 +1,12 @@
 % RunDoubleRamps
 clear
 % simtype = 'velocitytable_doubleramp_relaxed.csv';
-simtype = 'velocitytable_doubleramp2_relaxed.csv';
+simtype = 'velocitytable_doubleramp2_relaxed';
 pCa = 11;
 
 % simtype = 'velocitytable_doubleramp_active.csv';
-simtype = 'velocitytable_doubleramp2_active.csv';
-pCa = 4.51;
+% simtype = 'velocitytable_doubleramp2_active';
+% pCa = 4.51;
 
 % simtype = 'ramp';
 clear params;
