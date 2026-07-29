@@ -40,7 +40,7 @@ if ~exist('params', 'var')
       5.19       12.8       3109       2.37      4e+04       2.74  3.184e+06      6.526      0.678      0.165   0.002699      0.383 
       5.19       12.8       1623       2.37      4e+04       2.74  1.807e+07       7.96      0.678      0.165  3.261e-05      0.383 
       5.19       12.8      887.7       2.37      4e+04       2.74  1.876e+07      8.505      0.678      0.165  3.478e-06      0.383 
-      5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN 
+      4       12.8      412.3       2.37      4e+04       2.74  2.668e+07      9.035      0.0678      0.165        NaN        NaN 
     ];
    pcax = [4.51, 5.5, 5.75, 6, 6.2, 11];
    i_pcax = find(pCa == pcax);
@@ -163,6 +163,7 @@ elseif strncmp(simtype, 'velocitytable_doubleramp2_relaxed', 33)
     datatables{1} = readtable('..\Data\2025 11 21 Export/03_Log_Relax_Refolding.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
+    datatables{1}.F = datatables{1}.F + 5; % upward shift
 elseif strncmp(simtype, 'velocitytable_doubleramp2_active', 32)
     datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
@@ -912,6 +913,7 @@ maxPu = 0; maxPa = 0;
       nexttile;
       plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '-',lineWidth = 1);hold on;
       % plot(Time{j}, Force{j}, datatables{1}.Time, datatables{1}.F, Time{1}, F_data{1});
+      % where data plotted
 
       err =  nansum((F_data{1} - Force{1}').^2);
 
@@ -989,7 +991,7 @@ for j = rampSet
 end
 
 PeakModel = nan(1, length(PeakData(:, 2)));
-for j = 1:size(PeakModel)
+for j = 1:length(PeakModel)
     m = max(Force{j});
     if ~isempty(m)
         PeakModel(j) = m;

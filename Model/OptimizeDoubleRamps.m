@@ -16,10 +16,10 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [ 5.19  12.8  512.3  2.37  4e+04  2.74  2.668e+07  9.035  0.678  0.165  NaN    NaN    1 ];
+params_low  = [3.884	15.19	199.752	5.43	31856	2.798	8.151E+06	13.168	0.0685	0.197	NaN	NaN	1733.86];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
-params_high = [ 5.19  12.8  4345   2.37  4e+04  2.74  8.658e+05  5.797  0.678  0.165  0.005381  0.383  1 ];
+params_high = [3.884	15.19	224.948	5.43	31856	2.798	8.359E+06	13.4455	0.063	0.197	0.007139	0.201	1866.12];
 
 options = optimset('Display', 'iter', 'TolFun', 1e-3, 'TolX', 0.01, ...
                    'PlotFcns', @optimplotfval, 'MaxIter', 100);
@@ -32,7 +32,7 @@ evalDoubleRamps([], params_low, params_high, [], [4.51])
 
 %% Phase 1: pCa=11, fit mechanical params + alphaF_0
 % kA(11) and kD(12) are NaN for pCa=11 so they are excluded
-runOptim1 = false;
+runOptim1 = true;
 if runOptim1
     modSel = [1 2 3 4 5 6 7 8 9 10 13];   % all non-NaN params + alphaF_0
     pCas   = [11];
@@ -49,7 +49,8 @@ end
 runOptim2 = false;
 if runOptim2
     modSel = [3 7 8 11 12];   % kp, alphaU, nU, kA, kD  (Ca-dependent)
-    pCas   = [4.51 11];
+    %pCas   = [4.51 11];
+    pCas   = [4.51];
     init   = params_high(modSel);
     evalLin = @(x) evalDoubleRamps(x, params_low, params_high, modSel, pCas);
     x = fminsearch(evalLin, init, options);
