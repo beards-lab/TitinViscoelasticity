@@ -13,7 +13,7 @@ pCa = 11;
 
 % simtype = 'ramp';
 clear params;
-params = [3.884	15.19	199.752	2.37	31856	2.798	2.668E+07	13.168	0.03	0.165	NaN	NaN	1866.12];
+params = [3.43581	11.535	366.315	3.28	37375.7	3.331	2.586E+07	10	0.0654	0.183	NaN	NaN	89.143];
 % alphaF_0 = 0;
 
 rampSet = [1 2 3 4];
@@ -65,24 +65,24 @@ figure(296);clf;
 nexttile;hold on;
 tdindex = data_time >= 100 & data_time <= 130;
 tsindex = sim_time >= 100 & sim_time <= 130;
-plot(data_time(tdindex), data_force_corr(tdindex),'|-');
-plot(sim_time(tsindex), sim_force(tsindex), LineWidth=2);
-[data_forcepeaks, i_data_forcepeaks] = findpeaks(data_force_corr(tdindex),data_time(tdindex),'MinPeakWidth',1.5e-3,'MaxPeakWidth',1, ...
+plot(data_time, data_force_corr,'|-');
+plot(sim_time, sim_force, LineWidth=2);
+[data_forcepeaks, i_data_forcepeaks] = findpeaks(data_force_corr,data_time,'MinPeakWidth',1.5e-3,'MaxPeakWidth',1, ...
               'MinPeakProminence',5, 'Annotate','extents','MinPeakDistance',25);
-sim_forcepeaks = findpeaks(sim_force(tsindex),sim_time(tsindex),'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
+sim_forcepeaks = findpeaks(sim_force, sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
               'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
 
 % just for the annotation
-findpeaks(sim_force(tsindex),sim_time(tsindex),'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
+findpeaks(sim_force,sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
               'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
 
 % data_forcepeaks = data_forcepeaks/max(data_forcepeaks);
 % sim_forcepeaks = sim_forcepeaks/max(sim_forcepeaks);
 
-first_peaks = data_forcepeaks(1:2:tdindex);
-second_peaks = data_forcepeaks(2:2:tdindex);
-sim_first_peaks = sim_forcepeaks(1:2:tsindex);
-sim_second_peaks = sim_forcepeaks(2:2:tsindex);
+first_peaks = data_forcepeaks(1:2:end);
+second_peaks = data_forcepeaks(2:2:end);
+sim_first_peaks = sim_forcepeaks(1:2:end);
+sim_second_peaks = sim_forcepeaks(2:2:end);
 
 slack_durs = [0 5 10 20 50 100 200 500]*1e-3 + 10e-3;
 % sim_slack_durs = [0 5 10 20]*1e-3 + 10e-3;

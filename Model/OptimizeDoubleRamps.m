@@ -16,7 +16,7 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [3.884	15.19	199.752	5.43	31856	2.798	8.151E+06	13.168	0.0685	0.197	NaN	NaN	1733.86];
+params_low  = [3.7232	12.011	380.57	2.847	39736.7	3.121	2.553E+07	10	0.0609	0.167	NaN	NaN	87.32];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
 params_high = [3.884	15.19	224.948	5.43	31856	2.798	8.359E+06	13.4455	0.063	0.197	0.007139	0.201	1866.12];
@@ -209,8 +209,28 @@ function cost = isolateRunDoubleRamps(params, pCa)
     ref  = max(data_first);
     err1 = (sim_first(1:n)  - data_first(1:n) ) / ref;
     err2 = (sim_second(1:n) - data_second(1:n)) / ref;
-    cost = 1e3 * mean(err1.^2 + err2.^2);
 
+    % start WIP
+    En = cell(1, length(rampSet));
+    Es = cell(0);
+    for j = rampSet
+        datatable_cur = datatables{j};
+        if isempty(datatable_cur)
+            continue;
+        end
+        inds = find(datatable_cur.Time >= t_endFreeware(j));
+        datatable_cur = datatable_cur(inds, :);
+        t_int{j} = datatable_cur.Time - 2;
+        % t_int{j} = datatable_cur.Time;
+        Ftot_int{j} = interp1(Time{j}, Force{j}, t_int{j}); % total force interpolated
+        Es{j} = w.*((Ftot_int{j} - datatable_cur.F)/max(Ftot_int{j})).^2; % error set
+        Es{j} = Es{j}(~isnan(Es{j})); % zero outside bounds
+        En{j} = 1e3*sum(Es{j})/length(Es{j}); % normalized error
+    
+      
+    end
+    cost = 1e3 * mean(err1.^2 + err2.^2) + sum([En{1:end}], 'all');
+    % fin WIP
     if ~isfinite(cost)
         cost = 1e6;
     end
