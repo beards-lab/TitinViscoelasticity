@@ -40,7 +40,7 @@ if ~exist('params', 'var')
       5.19       12.8       3109       2.37      4e+04       2.74  3.184e+06      6.526      0.678      0.165   0.002699      0.383 
       5.19       12.8       1623       2.37      4e+04       2.74  1.807e+07       7.96      0.678      0.165  3.261e-05      0.383 
       5.19       12.8      887.7       2.37      4e+04       2.74  1.876e+07      8.505      0.678      0.165  3.478e-06      0.383 
-      4       12.8      412.3       2.37      4e+04       2.74  2.668e+07      9.035      0.0678      0.165        NaN        NaN 
+      5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN 
     ];
    pcax = [4.51, 5.5, 5.75, 6, 6.2, 11];
    i_pcax = find(pCa == pcax);
@@ -507,7 +507,8 @@ maxPu = 0; maxPa = 0;
         if ~exist('statesFig')
             statesFig = figure(50+round(pCa*10)+j); clf;
         else
-            figure(statesFig);
+            %figure(statesFig); error kate
+            statesFig = figure(50+round(pCa*10)+j); clf;
         end
         
         tiledlayout(layout_x, 4, 'TileSpacing','compact', Padding='loose');
@@ -918,7 +919,7 @@ maxPu = 0; maxPa = 0;
       err =  nansum((F_data{1} - Force{1}').^2);
 
       % findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=120);
-        [py, px] = findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=20, MinPeakHeight=10);
+        [py, px] = findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=20, MinPeakHeight=5.5);
         plot(px, py, '*');
 
         nexttile;
@@ -929,7 +930,7 @@ maxPu = 0; maxPa = 0;
         
         % plot(px(sel), py(sel), 's', LineWidth=4);
         
-        [pm pmx] = findpeaks(Force{1}, Time{1}, MinPeakDistance=20, MinPeakHeight=10);
+        [pm, pmx] = findpeaks(Force{1}, Time{1}, MinPeakDistance=20, MinPeakHeight=10);
         
         plot(pm(1:2:end));hold on;
         plot(pm(2:2:end));hold on;
@@ -1004,7 +1005,7 @@ if pCa < 10
     % Ep = 0;
 end
 
-cost = Ep*100 + sum([En{1:end}], 'all');
+cost = Ep*100 + sum([En{1:end}], 'all'); %later overwritten
 
 if exist('drawPlots', 'var') && ~drawPlots
     return;

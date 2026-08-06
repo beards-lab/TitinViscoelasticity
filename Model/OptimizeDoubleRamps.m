@@ -16,7 +16,7 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [3.7232	12.011	380.57	2.847	39736.7	3.121	2.553E+07	10	0.0609	0.167	NaN	NaN	87.32];
+params_low  = [5.19	12.8	512.3	2.37	4E+04	2.74	2.668E+07	9.035	0.678	0.165	NaN	NaN	80];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
 params_high = [3.884	15.19	224.948	5.43	31856	2.798	8.359E+06	13.4455	0.063	0.197	0.007139	0.201	1866.12];
@@ -35,6 +35,7 @@ evalDoubleRamps([], params_low, params_high, [], [4.51])
 runOptim1 = true;
 if runOptim1
     modSel = [1 2 3 4 5 6 7 8 9 10 13];   % all non-NaN params + alphaF_0
+    %modSel = [3 4 5 6 7 9]; % hold some constant
     pCas   = [11];
     init   = params_low(modSel);
     evalLin = @(x) evalDoubleRamps(x, params_low, params_high, modSel, pCas);
@@ -182,10 +183,13 @@ function cost = isolateRunDoubleRamps(params, pCa)
     % Threshold relative to data amplitude
     data_prom = 0.2 * max(data_force);
 
+   % taken out from function below
+    %'MinPeakWidth',       1.5e-3, ...
+       % 'MaxPeakWidth',       5,      ...
+       % 'MinPeakProminence',  data_prom, ...
+
     data_peaks = findpeaks(data_force, data_time, ...
-        'MinPeakWidth',       1.5e-3, ...
-        'MaxPeakWidth',       5,      ...
-        'MinPeakProminence',  data_prom, ...
+        'MinPeakHeight',  5.5, ...
         'MinPeakDistance',    20);
     data_peaks = data_peaks(:);
 
