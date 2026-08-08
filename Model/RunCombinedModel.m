@@ -930,7 +930,7 @@ maxPu = 0; maxPa = 0;
         
         % plot(px(sel), py(sel), 's', LineWidth=4);
         
-        [pm, pmx] = findpeaks(Force{1}, Time{1}, MinPeakDistance=20, MinPeakHeight=5.5);
+        [pm, pmx] = findpeaks(Force{1}, Time{1}, MinPeakDistance=20, MinPeakHeight=10);
         
         plot(pm(1:2:end));hold on;
         plot(pm(2:2:end));hold on;
