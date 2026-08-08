@@ -16,7 +16,7 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [5.19	12.8	512.3	2.37	4E+04	2.74	2.668E+07	9.035	0.678	0.165	NaN	NaN	80];
+params_low  = [2.721	5.375	663.426	3.613	43773.7	4.897	4.374E+07	9.592	0.098	0.212	NaN	NaN	206.761];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
 params_high = [3.884	15.19	224.948	5.43	31856	2.798	8.359E+06	13.4455	0.063	0.197	0.007139	0.201	1866.12];
@@ -187,7 +187,9 @@ function cost = isolateRunDoubleRamps(params, pCa)
     %'MinPeakWidth',       1.5e-3, ...
        % 'MaxPeakWidth',       5,      ...
        % 'MinPeakProminence',  data_prom, ...
-
+    [~, x_peak] = findpeaks(data_force, data_time, ...
+        'MinPeakHeight',  5.5, ...
+        'MinPeakDistance',    20);
     data_peaks = findpeaks(data_force, data_time, ...
         'MinPeakHeight',  5.5, ...
         'MinPeakDistance',    20);
@@ -230,10 +232,20 @@ function cost = isolateRunDoubleRamps(params, pCa)
         Es{j} = w.*((Ftot_int{j} - datatable_cur.F)/max(Ftot_int{j})).^2; % error set
         Es{j} = Es{j}(~isnan(Es{j})); % zero outside bounds
         En{j} = 1e3*sum(Es{j})/length(Es{j}); % normalized error
-    
-      
+% kate addition here 
+        err_window = 0;
+        for i = 1:length(data_peaks)
+            p_time = x_peak(i); % times of peaks
+            window_peak = (Time{j} > p_time) & (t <= (p_time + 1)); % window is between peak and 1ms
+            err_window = err_window + sum(Force{j}(window_peak)); % Sum the points in this specific window
+            % disp(err_window); % sanity check
+        end
+        normerr_window{j} = 1e3 * err_window/(length(window_peak).* 16);
+    cost = 1e3 * mean(err1.^2 + err2.^2) + sum([En{1:end}], 'all') + normerr_window{j};
     end
-    cost = 1e3 * mean(err1.^2 + err2.^2) + sum([En{1:end}], 'all');
+     
+      
+
     % fin WIP
     if ~isfinite(cost)
         cost = 1e6;
