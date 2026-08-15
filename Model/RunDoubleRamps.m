@@ -13,7 +13,7 @@ pCa = 11;
 
 % simtype = 'ramp';
 clear params;
-params = [4.65	14.8	537.221	4.91	49222	3.718	3.927E+07	10.1	0.058	0.18	NaN	NaN	99];
+params = [3.677	2.808	859.277	3.962	46329.9	4.704	5.126E+07	11.587	0.0981	0.239	NaN	NaN	183.514];
 % alphaF_0 = 0;
 
 rampSet = [1 2 3 4];
@@ -45,12 +45,21 @@ plot(Time{1}, (Length{1}+0.95));
 data_force = datatables{1}.F;
 data_length = datatables{1}.L-0.95;
 data_time = datatables{1}.Time;
+tdindex = data_time >= 100 & data_time <= 130;
+data_time = data_time(tdindex);
+data_length = data_length(tdindex);
+data_force = data_force(tdindex);
+
 i_zeropoints = data_length < -0.1;
 data_force0 = data_force(i_zeropoints);
 data_force0Time = datatables{1}.Time(i_zeropoints);
 data_force_corr = data_force;% - sf(data_time);
 sim_time = Time{1};
 sim_force = Force{1};
+tsindex = sim_time >= 100 & sim_time <= 130;
+sim_time = sim_time(tsindex);
+sim_force = sim_force(tsindex);
+
 
 figure(296);clf;
 
@@ -63,8 +72,6 @@ figure(296);clf;
 
 
 nexttile;hold on;
-tdindex = data_time >= 100 & data_time <= 130;
-tsindex = sim_time >= 100 & sim_time <= 130;
 plot(data_time, data_force_corr,'|-');
 plot(sim_time, sim_force, LineWidth=2);
 [data_forcepeaks, i_data_forcepeaks] = findpeaks(data_force_corr,data_time,'MinPeakWidth',1.5e-3,'MaxPeakWidth',1, ...
@@ -73,33 +80,34 @@ sim_forcepeaks = findpeaks(sim_force, sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidt
               'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
 
 % just for the annotation
-findpeaks(sim_force,sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
+findpeaks(sim_force(tsindex),sim_time(tsindex),'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
               'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
 
 % data_forcepeaks = data_forcepeaks/max(data_forcepeaks);
 % sim_forcepeaks = sim_forcepeaks/max(sim_forcepeaks);
 
 first_peaks = data_forcepeaks(1:2:end);
-second_peaks = data_forcepeaks(2:2:end);
+%second_peaks = data_forcepeaks(2:2:end);
 sim_first_peaks = sim_forcepeaks(1:2:end);
-sim_second_peaks = sim_forcepeaks(2:2:end);
+%sim_second_peaks = sim_forcepeaks(2:2:end);
 
 slack_durs = [0 5 10 20 50 100 200 500]*1e-3 + 10e-3;
 % sim_slack_durs = [0 5 10 20]*1e-3 + 10e-3;
 sim_slack_durs = slack_durs;
 %%
 nexttile();
-semilogx(slack_durs, first_peaks, 'ks-',slack_durs,second_peaks, 'kv--', LineWidth=2); 
+semilogx(slack_durs, first_peaks, 'ks-',LineWidth=2);
+%semilogx(slack_durs, first_peaks, 'ks-',slack_durs,second_peaks, 'kv--', LineWidth=2); 
 hold on;
-semilogx(sim_slack_durs, sim_first_peaks, 'rx-',sim_slack_durs,sim_second_peaks, 'r+--', LineWidth=2); 
+semilogx(sim_slack_durs, sim_first_peaks, 'rx-', LineWidth=2); 
+%semilogx(sim_slack_durs, sim_first_peaks, 'rx-',sim_slack_durs,sim_second_peaks, 'r+--', LineWidth=2); 
 legend('First peak', 'Second peak','SIM: First peak', 'SIM: Second peak');
 
-xlabel('Refoldind duration (s)')
+xlabel('Refolding duration (s)')
 
 
 
 %%
-
     datatables{1} = readtable('..\Data\2025 11 21 Export/0ms_refolding_Active.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
@@ -116,6 +124,6 @@ datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt
 clf; 
 hold on;
 
-    plot(dss.Time, dss.L, ds.Time+100-0.0154, ds.L,Time{1}, Length{1} + 0.95);
-    plot(ds.Time+100-0.0154, ds.F, dss.Time, dss.F, Time{1}, Force{1})
+    %plot(dss.Time, dss.L, ds.Time+100-0.0154, ds.L,Time{1}, Length{1} + 0.95);
+    %plot(ds.Time+100-0.0154, ds.F, dss.Time, dss.F, Time{1}, Force{1})
     

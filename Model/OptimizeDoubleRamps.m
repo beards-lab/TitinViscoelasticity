@@ -16,10 +16,10 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [5.19	12.8	512.3	2.37	4E+04	2.74	2.668E+07	9.035	0.678	0.165	NaN	NaN	80];
+params_low  = [3.677	2.808	859.277	3.962	46329.9	4.704	5.126E+07	11.5	0.0981	0.239	NaN	NaN	183.514];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
-params_high = [3.884	15.19	224.948	5.43	31856	2.798	8.359E+06	13.4455	0.063	0.197	0.007139	0.201	1866.12];
+params_high = [3.632	3.157	950	4.121	39822.5	5.022	4.801E+07	15	0.097	0.221	0.008014	0.19	176.501];
 
 options = optimset('Display', 'iter', 'TolFun', 1e-3, 'TolX', 0.01, ...
                    'PlotFcns', @optimplotfval, 'MaxIter', 100);
@@ -148,6 +148,10 @@ function cost = isolateRunDoubleRamps(params, pCa)
     % element-wise subtraction, making cost a matrix instead of scalar.
     sim_force = Force{1}(:);
     sim_time  = Time{1}(:);
+    tsindex = sim_time >= 100 & sim_time <= 130;
+    sim_force = sim_force(tsindex);
+    sim_time  = sim_time(tsindex);
+
 
     % Guard: negative params or diverged solution
     if any(isnan(sim_force)) || max(sim_force) <= 0
@@ -165,12 +169,12 @@ function cost = isolateRunDoubleRamps(params, pCa)
         'MinPeakDistance',    20);
     sim_peaks = sim_peaks(:);   % ensure column
 
-    if length(sim_peaks) < 2
-        cost = 1e6;
-        return;
-    end
+    %if length(sim_peaks) < 2
+    %    cost = 1e6;
+    %    return;
+    %end
     sim_first  = sim_peaks(1:2:end);
-    sim_second = sim_peaks(2:2:end);
+    %sim_second = sim_peaks(2:2:end);
 
     % Data peaks (datatables{1} loaded by RunCombinedModel)
     if isempty(datatables) || isempty(datatables{1})
@@ -179,6 +183,13 @@ function cost = isolateRunDoubleRamps(params, pCa)
     end
     data_force = datatables{1}.F(:);
     data_time  = datatables{1}.Time(:);
+    tdindex = data_time >= 100 & data_time <= 130;
+    data_force = data_force(tdindex);
+    data_time  = data_time(tdindex);
+
+    % checking to make sure correct data range
+    %figure;
+    %plot(sim_time, sim_force, '-|', data_time, data_force, '-|',lineWidth = 1);hold on;
 
     % Threshold relative to data amplitude
     data_prom = 0.2 * max(data_force);
@@ -196,23 +207,23 @@ function cost = isolateRunDoubleRamps(params, pCa)
     % Relaxed data has a negative DC offset — keep only positive peaks
     data_peaks = data_peaks(data_peaks > 0);
 
-    if length(data_peaks) < 2
-        cost = 1e6;
-        return;
-    end
+    %if length(data_peaks) < 2
+    %    cost = 1e6;
+    %    return;
+    %end
     data_first  = data_peaks(1:2:end);
-    data_second = data_peaks(2:2:end);
+    %data_second = data_peaks(2:2:end);
 
     % Normalized peak cost — scale matched to En{j} in RunCombinedModel
-    n   = min([length(sim_first), length(data_first), ...
-               length(sim_second), length(data_second)]);
+    n   = min([length(sim_first), length(data_first)]);
+
     if n < 1
         cost = 1e6;
         return;
     end
     ref  = max(data_first);
     err1 = (sim_first(1:n)  - data_first(1:n) ) / ref;
-    err2 = (sim_second(1:n) - data_second(1:n)) / ref;
+   % err2 = (sim_second(1:n) - data_second(1:n)) / ref;
 
     % start WIP
     En = cell(1, length(rampSet));
@@ -233,7 +244,9 @@ function cost = isolateRunDoubleRamps(params, pCa)
     
       
     end
-    cost = 1e3 * mean(err1.^2 + err2.^2) + sum([En{1:end}], 'all');
+    cum_error = [];
+    cum_error = cumsum(Es{j});
+    cost = 1e3 * mean(err1.^2) + sum([En{1:end}], 'all');
     % fin WIP
     if ~isfinite(cost)
         cost = 1e6;

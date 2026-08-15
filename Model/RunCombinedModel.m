@@ -162,8 +162,15 @@ elseif strncmp(simtype, 'velocitytable_doubleramp_active', 31)
 elseif strncmp(simtype, 'velocitytable_doubleramp2_relaxed', 33)
     datatables{1} = readtable('..\Data\2025 11 21 Export/03_Log_Relax_Refolding.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
+    datatables{1} = datatables{1}(1:130001,:);
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
     datatables{1}.F = datatables{1}.F + 5; % upward shift
+    %rds = [0.002];
+    %t_s = [linspace(0, 1, 20)*rds, ...                
+    %           logspace(log10(rds), log10(rds + min(60, outT(end) - rds(i_rds))), 80)];
+    %FLSDint = interp1(outT, [outF, rmp.L(1:L), SD], t_s, "pchip", 'extrap');
+    %tab_interp = table(t_s' + 2, FLSDint(:, 2), FLSDint(:, 1)*Fmax, FLSDint(:, 3)*Fmax);
+    %tab_interp.Properties.VariableNames = {'Time', 'L', 'F', 'SD'};
 elseif strncmp(simtype, 'velocitytable_doubleramp2_active', 32)
     datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
@@ -806,11 +813,18 @@ maxPu = 0; maxPa = 0;
   Force_par{j} = k_ss*max(Length{j}, 0).^n_ss;
   % calc force
   Force{j} = Force{j} + Force_par{j}; 
+  tsindex = Time{1} >= 100 & Time{1} <= 130;
+  Force{j} = Force{j}(tsindex);
+  Time{1} = Time{1}(tsindex);
+  timediff = [diff(Time{1})];
+  %checklog = [diff(log10(Time{1}))];
+  Length{1} = Length{1}(tsindex);
+
     
   if drawAllStates == j
         nexttile([1 4]);
         semilogx(Time{j}, Force{j}, 'k-');hold on;
-        scatter(Time{j}(i_time_snaps), Force{j}(i_time_snaps), 'ko', 'filled');
+%        scatter(Time{j}(i_time_snaps), Force{j}(i_time_snaps), 'ko', 'filled');
         xlim([1e-3 max(1300, rds(j)*10) + 30]);
         xlim([1e-3 200]);
         % nexttile([1 1]);
@@ -906,17 +920,23 @@ maxPu = 0; maxPa = 0;
       if drawPlots
       set(groot,'CurrentFigure',figInd); % replace figure(indFig) without stealing the focus
       cf = clf;
+      tdindex = datatables{1}.Time >= 100 & datatables{1}.Time <= 130;
+      datatables{1} = datatables{1}(tdindex, :);
+
       F_data{1} = interp1(datatables{1}.Time, datatables{1}.F, Time{1}); % total force interpolated
       nexttile;
       L_data{1} = interp1(datatables{1}.Time, datatables{1}.L, Time{1}); % total force interpolated
+   
+
       plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1}); 
-      
+      %plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1});
+
       nexttile;
-      plot(Time{1}, F_data{1}, '-',Time{1}, Force{1}, '-',lineWidth = 1);hold on;
+      plot(Time{1}, F_data{1}, '-|',Time{1}, Force{1}, '-|',lineWidth = 1);hold on;
       % plot(Time{j}, Force{j}, datatables{1}.Time, datatables{1}.F, Time{1}, F_data{1});
       % where data plotted
 
-      err =  nansum((F_data{1} - Force{1}').^2);
+      err =  sum((F_data{1} - Force{1}').^2);
 
       % findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=120);
         [py, px] = findpeaks(datatables{1}.F, datatables{1}.Time, MinPeakDistance=20, MinPeakHeight=5.5);
@@ -927,6 +947,7 @@ maxPu = 0; maxPa = 0;
         plot(py(2:2:end));hold on;
         % hold on;
         sel = [2 3 4 5 6 8 9 11];
+        sel = [1];
         
         % plot(px(sel), py(sel), 's', LineWidth=4);
         
@@ -983,7 +1004,8 @@ for j = rampSet
 %%
     Es{j} = w.*((Ftot_int{j} - datatable_cur.F)/max(Ftot_int{j})).^2; % error set
     Es{j} = Es{j}(~isnan(Es{j})); % zero outside bounds
-    En{j} = 1e3*sum(Es{j})/length(Es{j}); % normalized error
+    En{j} = 1e3*cumsum(Es{j})/length(Es{j}); % normalized error
+    cum_error = cumsum(En{j});
     
     PeakData(j, 1) = rds(j);
     PeakData(j, 2) = max(datatable_cur.F);
@@ -1005,7 +1027,7 @@ if pCa < 10
     % Ep = 0;
 end
 
-cost = Ep*100 + sum([En{1:end}], 'all'); %later overwritten
+%cost = Ep*100 + sum([En{1:end}], 'all'); %overwrites prev one
 
 if exist('drawPlots', 'var') && ~drawPlots
     return;
@@ -1111,7 +1133,7 @@ for j = max(rampSet):-1:1
         'horizontalAlignment', 'right', VerticalAlignment='bottom', Interpreter='latex');    
     end
 end
-xlim([1e-2, 160])
+xlim([1e-2, 100])
 ylim([0 ceil((ym)/5)*5])
 yl = ylim();
 tile_semilogx.XScale='log';
@@ -1211,7 +1233,7 @@ for j = max(rampSet):-1:1
     end
     h = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
     set([h.Bar, h.Line], 'ColorType', 'truecoloralpha', 'ColorData', [h.Line.ColorData(1:3); 255])
-    plot(Time{j},Force{j},'-', 'linewidth',2, 'Color', 'k'); 
+    plot(Time{j},Force{j},'-|', 'linewidth',2, 'Color', 'k'); 
     xlim([0 min(rds(j)*3, 160)]);
     xl = xlim();
     ylim(yl);
