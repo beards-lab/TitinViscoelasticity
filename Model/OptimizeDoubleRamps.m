@@ -16,7 +16,7 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [3.677	2.808	859.277	3.962	46329.9	4.704	5.126E+07	11.5	0.0981	0.239	NaN	NaN	183.514];
+params_low  = [4.72	15.20	512.05	2.85	38176	3.03	3.08E+07	10.30	0.30	0.21	NaN	NaN	82.88];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
 params_high = [3.632	3.157	950	4.121	39822.5	5.022	4.801E+07	15	0.097	0.221	0.008014	0.19	176.501];
@@ -35,7 +35,7 @@ evalDoubleRamps([], params_low, params_high, [], [4.51])
 runOptim1 = true;
 if runOptim1
     modSel = [1 2 3 4 5 6 7 8 9 10 13];   % all non-NaN params + alphaF_0
-    %modSel = [3 4 5 6 7 9]; % hold some constant
+    %modSel = [1 2 3 4 5 6 7 8 9 10]; % hold some constant
     pCas   = [11];
     init   = params_low(modSel);
     evalLin = @(x) evalDoubleRamps(x, params_low, params_high, modSel, pCas);
@@ -105,11 +105,13 @@ function totalCost = evalDoubleRamps(optMods, params_low, params_high, modSel, p
         totalCost = totalCost + cost;
     end
 
+    %{
     if ismember(4.51, pCas) || ismember(4.4, pCas)
         cost = isolateRunDoubleRamps(params_high, 4.51);
         fprintf('  pCa=4.51 cost = %g\n', cost);
         totalCost = totalCost + cost;
     end
+    %}
 end
 
 function cost = isolateRunDoubleRamps(params, pCa)
@@ -124,7 +126,7 @@ function cost = isolateRunDoubleRamps(params, pCa)
 %   - Filter data peaks to positive values (relaxed data has a negative
 %     baseline from drift/offset that creates spurious negative peaks).
 
-    drawPlots = false;
+    drawPlots = true;
     rampSet   = [1];
     alphaF_0  = params(13);
 
@@ -246,9 +248,9 @@ function cost = isolateRunDoubleRamps(params, pCa)
     end
     cum_error = [];
     cum_error = cumsum(Es{j});
-    cost = 1e3 * mean(err1.^2) + sum([En{1:end}], 'all');
+    %cost = 1e3 * mean(err1.^2) + sum([En{1:end}], 'all');
     % fin WIP
-    if ~isfinite(cost)
-        cost = 1e6;
-    end
+    %if ~isfinite(cost)
+    %    cost = 1e6;
+    %end
 end

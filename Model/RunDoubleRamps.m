@@ -13,7 +13,7 @@ pCa = 11;
 
 % simtype = 'ramp';
 clear params;
-params = [3.677	2.808	859.277	3.962	46329.9	4.704	5.126E+07	11.587	0.0981	0.239	NaN	NaN	183.514];
+params = [5.19	12.8	512.3	2.37	4E+04	2.74	2.668E+07	9.035	0.678	0.165	NaN	NaN	80];
 % alphaF_0 = 0;
 
 rampSet = [1 2 3 4];
@@ -60,7 +60,7 @@ tsindex = sim_time >= 100 & sim_time <= 130;
 sim_time = sim_time(tsindex);
 sim_force = sim_force(tsindex);
 
-
+% not interpolated
 figure(296);clf;
 
 % show the cleared trend in the data
@@ -72,16 +72,19 @@ figure(296);clf;
 
 
 nexttile;hold on;
-plot(data_time, data_force_corr,'|-');
-plot(sim_time, sim_force, LineWidth=2);
 [data_forcepeaks, i_data_forcepeaks] = findpeaks(data_force_corr,data_time,'MinPeakWidth',1.5e-3,'MaxPeakWidth',1, ...
               'MinPeakProminence',5, 'Annotate','extents','MinPeakDistance',25);
-sim_forcepeaks = findpeaks(sim_force, sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
-              'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
+[sim_forcepeaks, i_sim_forcepeaks] = findpeaks(sim_force, sim_time,'MinPeakWidth', 0.0000001,'MaxPeakWidth',1, ...
+              'Annotate','extents','MinPeakDistance',0.2, 'MinPeakHeight', 9);
+
+t_lag = i_sim_forcepeaks - i_data_forcepeaks;
+
+plot(data_time, data_force_corr,'|-');
+plot(sim_time - t_lag, sim_force, LineWidth=2);
 
 % just for the annotation
-findpeaks(sim_force(tsindex),sim_time(tsindex),'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
-              'MinPeakProminence',2,'MinPeakDistance',25, 'Annotate','extents');
+findpeaks(sim_force,sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
+              'MinPeakProminence',2, 'Annotate','extents','MinPeakDistance',25);
 
 % data_forcepeaks = data_forcepeaks/max(data_forcepeaks);
 % sim_forcepeaks = sim_forcepeaks/max(sim_forcepeaks);
@@ -98,13 +101,18 @@ sim_slack_durs = slack_durs;
 nexttile();
 semilogx(slack_durs, first_peaks, 'ks-',LineWidth=2);
 %semilogx(slack_durs, first_peaks, 'ks-',slack_durs,second_peaks, 'kv--', LineWidth=2); 
-hold on;
-semilogx(sim_slack_durs, sim_first_peaks, 'rx-', LineWidth=2); 
+%hold on; here before
+%semilogx(sim_slack_durs, sim_first_peaks, 'rx-', LineWidth=2); here before
 %semilogx(sim_slack_durs, sim_first_peaks, 'rx-',sim_slack_durs,sim_second_peaks, 'r+--', LineWidth=2); 
-legend('First peak', 'Second peak','SIM: First peak', 'SIM: Second peak');
+%legend('First peak', 'Second peak','SIM: First peak', 'SIM: Second peak'); %here before
 
-xlabel('Refolding duration (s)')
+%xlabel('Refolding duration (s)') here before
 
+%% interpolated
+figure(322);clf;
+nexttile;
+F_data{1} = interp1(data_time, data_force_corr, sim_time); % total force interpolated
+plot(sim_time, F_data{1}, '-|',sim_time - t_lag, sim_force, '-|',lineWidth = 1);
 
 
 %%

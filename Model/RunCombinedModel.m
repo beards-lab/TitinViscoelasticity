@@ -165,12 +165,6 @@ elseif strncmp(simtype, 'velocitytable_doubleramp2_relaxed', 33)
     datatables{1} = datatables{1}(1:130001,:);
     datatables{1}.Time = datatables{1}.Time /1000;% convert to ms
     datatables{1}.F = datatables{1}.F + 5; % upward shift
-    %rds = [0.002];
-    %t_s = [linspace(0, 1, 20)*rds, ...                
-    %           logspace(log10(rds), log10(rds + min(60, outT(end) - rds(i_rds))), 80)];
-    %FLSDint = interp1(outT, [outF, rmp.L(1:L), SD], t_s, "pchip", 'extrap');
-    %tab_interp = table(t_s' + 2, FLSDint(:, 2), FLSDint(:, 1)*Fmax, FLSDint(:, 3)*Fmax);
-    %tab_interp.Properties.VariableNames = {'Time', 'L', 'F', 'SD'};
 elseif strncmp(simtype, 'velocitytable_doubleramp2_active', 32)
     datatables{1} = readtable('..\Data\2025 11 21 Export/05_Log_Active_Refolding.txt');    
     datatables{1}.Properties.VariableNames = {'Time', 'L','F', 'SL'};
@@ -914,7 +908,7 @@ maxPu = 0; maxPa = 0;
     ylabel('$\Theta$ (kPa)', Interpreter='latex');
     fontsize(12, 'points');
     % exportgraphics(gcf,sprintf('../Figures/FigHysteresis%g_%gs.png', pCa, rds(j)),'Resolution',150)
-  elseif strncmp(simtype, 'velocitytable_', 14)
+  elseif strncmp(simtype, 'velocitytable_doubleramp2_relaxed', 33)
       
       %%
       if drawPlots
@@ -929,7 +923,6 @@ maxPu = 0; maxPa = 0;
    
 
       plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1}); 
-      %plot(Time{j}, Length{j} + 0.95, Time{j}, L_data{1});
 
       nexttile;
       plot(Time{1}, F_data{1}, '-|',Time{1}, Force{1}, '-|',lineWidth = 1);hold on;
@@ -950,8 +943,8 @@ maxPu = 0; maxPa = 0;
         sel = [1];
         
         % plot(px(sel), py(sel), 's', LineWidth=4);
-        
         [pm, pmx] = findpeaks(Force{1}, Time{1}, MinPeakDistance=20, MinPeakHeight=10);
+        
         
         plot(pm(1:2:end));hold on;
         plot(pm(2:2:end));hold on;
@@ -961,8 +954,7 @@ maxPu = 0; maxPa = 0;
         else
             peak_err = 1e5;
         end
-
-      cost = err + peak_err;
+    cost = err + peak_err; % most accurate cost
       end
   end
 end
@@ -1093,6 +1085,8 @@ for j = max(rampSet):-1:1
         continue;
     end
     if ~exist('compareFig', 'var') || compareFig
+        hm{j} = semilogx(Time{j},Force{j},'r-', 'linewidth',1.5);
+        %{
         hd{j} = errorbar(datatables{j}.Time-2,datatables{j}.F,datatables{j}.SD, '-', LineWidth=2, Color=colors(3, :), CapSize=0);
         set([hd{j}.Bar, hd{j}.Line], 'ColorType', 'truecoloralpha', 'ColorData', [hd{j}.Line.ColorData(1:3); 255*0.4])
         hm{j} = semilogx(Time{j},Force{j},'-', 'linewidth',2.5, 'Color', colors(1, :)); 
@@ -1106,7 +1100,7 @@ for j = max(rampSet):-1:1
     
         hl.ItemTokenSize = [30, 20];
         hl.Box = 'off';
-
+        %}
     else
         hm{j} = semilogx(Time{j},Force{j},'r-', 'linewidth',1.5); 
     end
