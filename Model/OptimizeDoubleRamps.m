@@ -16,7 +16,7 @@ paramNames = {'\F_{ss}', 'n_{ss}', 'k_p', 'n_p', 'k_d', 'n_d', ...
 
 % pCa=11 baseline (row 6 of RunCombinedModel paramSet) + alphaF_0 initial guess
 % alphaF_0 MUST be > 0 so cycles 2-8 can refold and produce peaks
-params_low  = [4.72	15.20	512.05	2.85	38176	3.03	3.08E+07	10.30	0.30	0.21	NaN	NaN	82.88];
+params_low  = [5.19       12.8      512.3       2.37      4e+04       2.74  2.668e+07      9.035      0.678      0.165        NaN        NaN 80];
 
 % pCa=4.51 baseline (row 1 of RunCombinedModel paramSet) + alphaF_0 initial guess
 params_high = [3.632	3.157	950	4.121	39822.5	5.022	4.801E+07	15	0.097	0.221	0.008014	0.19	176.501];

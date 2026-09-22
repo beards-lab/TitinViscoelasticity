@@ -13,7 +13,7 @@ pCa = 11;
 
 % simtype = 'ramp';
 clear params;
-params = [5.19	12.8	512.3	2.37	4E+04	2.74	2.668E+07	9.035	0.678	0.165	NaN	NaN	80];
+params = [5.19	12.80	512.30	2.37	40000.00	5.00	2.67E+07	2	0.68	0.17	NaN	NaN	80.00];
 % alphaF_0 = 0;
 
 rampSet = [1 2 3 4];
@@ -78,9 +78,10 @@ nexttile;hold on;
               'Annotate','extents','MinPeakDistance',0.2, 'MinPeakHeight', 9);
 
 t_lag = i_sim_forcepeaks - i_data_forcepeaks;
+sim_time = sim_time - t_lag;
 
 plot(data_time, data_force_corr,'|-');
-plot(sim_time - t_lag, sim_force, LineWidth=2);
+plot(sim_time, sim_force, LineWidth=2);
 
 % just for the annotation
 findpeaks(sim_force,sim_time,'MinPeakWidth',.5e-3,'MaxPeakWidth',100, ...
@@ -112,7 +113,7 @@ semilogx(slack_durs, first_peaks, 'ks-',LineWidth=2);
 figure(322);clf;
 nexttile;
 F_data{1} = interp1(data_time, data_force_corr, sim_time); % total force interpolated
-plot(sim_time, F_data{1}, '-|',sim_time - t_lag, sim_force, '-|',lineWidth = 1);
+plot(sim_time, F_data{1}, '-|',sim_time, sim_force, '-|',lineWidth = 1);
 
 
 %%

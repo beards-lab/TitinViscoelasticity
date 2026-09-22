@@ -950,7 +950,8 @@ maxPu = 0; maxPa = 0;
         plot(pm(2:2:end));hold on;
         
         if length(pm) == length(sel)
-            peak_err = sum(((py(sel) - pm').^2))*3e3;
+            %peak_err = sum(((py(sel) - pm').^2))*3e3;
+            peak_err = sum(((py(sel) - pm').^2))*2e3;
         else
             peak_err = 1e5;
         end
