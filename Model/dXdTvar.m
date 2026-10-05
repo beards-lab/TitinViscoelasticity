@@ -4,7 +4,9 @@ function g  = dXdTvar(t,x,Nx,Ng,ds,kA,kD,kd,Fp,RU,RF,mu,L_0,nd,kDf, V, cComp, mu
 % [0,1] scales the distal element's compressive branch (1 = dXdT, 0 =
 % tension-only, slack under compression); muRec (optional) is the drag for
 % recoiling chains (Vp < 0); kDslack (optional) is an extra detachment rate for
-% attached chains whose distal segment is slack (L < s). Otherwise identical.
+% attached chains whose distal segment is slack (L < s). Otherwise identical,
+% except that attached chains refold with their own flux RF*pa (dXdT applies
+% the unattached flux RF*pu to pa, which is wrong once alphaF_0 > 0).
 s  = (0:1:Nx-1)'.*ds;
 
 pu = reshape( x(1:(Ng+1)*Nx), [Nx,Ng+1]);
@@ -77,13 +79,14 @@ UR = RU.*pu(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
 % refolding rate - speed up 
 if ~isscalar(RF)
     % smooth (force-suppressed) refolding: RF is an Nx x Ng rate matrix
-    FR = RF.*pu(ij(:,2:Ng+1));
+    RFm = RF;
 elseif RF > 0
-    FR = RF.*pu(ij(:,2:Ng+1)); % rate of probabilty transitions from n+1 to n states
-    FR(Fp(:, 2:11) > 0) = 0;
+    RFm = RF*ones(Nx, Ng);        % rate of probabilty transitions from n+1 to n states
+    RFm(Fp(:, 2:Ng+1) > 0) = 0;
 else
-    FR = 0;
+    RFm = 0;
 end
+FR = RFm.*pu(ij(:,2:Ng+1));
 
 if t > 150
     a = 1;
@@ -97,6 +100,7 @@ g(ij(:,1:Ng))     = g(ij(:,1:Ng))     - UR + FR;
 if ~isempty(pa)
     NxNg = Nx*(Ng+1);
     UR = RU.*pa(ij(:,1:Ng)); % rate of probabilty transitions from n to n+1 states
+    FR = RFm.*pa(ij(:,2:Ng+1)); % refolding of the ATTACHED chains (dXdT uses the pu flux here)
     g(ij(:,2:(Ng+1))+NxNg) = g(ij(:,2:(Ng+1))+NxNg) + UR - FR;
     g(ij(:,1:Ng)+NxNg)     = g(ij(:,1:Ng)+NxNg)     - UR + FR;
 end

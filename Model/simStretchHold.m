@@ -27,6 +27,8 @@ function [F, L, fAtt] = simStretchHold(params, tOut, ramp, opts, Nx)
 %              of the on/off mask of dXdT (continuous in all parameters)
 %   kDslack    (index 27) extra detachment rate of attached chains with a slack
 %              distal segment (L < s), active only
+%   gammaF     (index 28) n-dependent refolding alphaF_0*((n+1)/Ng)^gammaF for
+%              n+1 -> n (combines with the on/off mask, or with F_R)
 %   Fbeta      Bell-type force-dependent unfolding
 %              U(n->n+1) = alphaU*exp(Fp(s,n)/Fbeta)*(Ng-n), nU unused
 
@@ -74,13 +76,26 @@ if numel(params) >= 26 && ~isnan(params(26)) && alphaF_0 > 0
     % smooth refolding n+1 -> n suppressed by the proximal force of state n+1
     alphaF_0 = alphaF_0*exp(-Fp(:, 2:Ng+1)/params(26));   % Nx x Ng
 end
+if numel(params) >= 28 && ~isnan(params(28)) && any(alphaF_0(:) > 0)
+    % n-dependent refolding: n+1 -> n at alphaF_0*((n+1)/Ng)^gammaF (fastest
+    % for chains with many unfolded domains); on/off mask kept unless F_R set
+    fac = ((1:Ng)/Ng).^params(28);
+    if isscalar(alphaF_0)
+        alphaF_0 = alphaF_0*fac.*ones(Nx, 1);
+        alphaF_0(Fp(:, 2:Ng+1) > 0) = 0;          % same mask as dXdT
+    else
+        alphaF_0 = alphaF_0.*fac;
+    end
+end
 kDf = 0;                                         % force-dependent detachment
 if numel(params) >= 25 && ~isnan(params(25)), kDf = params(25); end
 muRec = NaN;                                     % recoil drag (Vp < 0)
 if numel(params) >= 22, muRec = params(22); end
 kDslack = 0;                                     % detachment of slack attached chains
 if numel(params) >= 27 && ~isnan(params(27)), kDslack = params(27); end
-if ~isscalar(mu) || cComp ~= 1 || ~isnan(muRec) || kDf > 0 || ~isscalar(alphaF_0) || kDslack > 0
+isAct = numel(params) >= 12 && all(~isnan(params(11:12)));
+if ~isscalar(mu) || cComp ~= 1 || ~isnan(muRec) || kDf > 0 || ~isscalar(alphaF_0) || kDslack > 0 ...
+        || (isAct && any(alphaF_0(:) > 0))   % dXdT refolds attached chains with the pu flux
     odefun = @(t, x, varargin) dXdTvar(t, x, varargin{:}, cComp, muRec, kDslack);
 else
     odefun = @dXdT;
@@ -99,6 +114,24 @@ else
     x0 = [pu(:); 0];
 end
 
+% sparsity of the ODE Jacobian (speed only; same solution and tolerances):
+% p(s,n) couples to s+-1 (sliding), n+-1 (unfolding/refolding), its
+% attached/unattached twin, and the length L (last state)
+if isempty(odeget(opts, 'JPattern'))
+    nh = Nx*(Ng+1); nb = numel(x0) - 1;
+    [ii, jj] = ndgrid(1:Nx, 1:Ng+1); k = ii + Nx*(jj - 1);
+    nbr = {k, k(max(ii-1, 1) + Nx*(jj-1)), k(min(ii+1, Nx) + Nx*(jj-1)), ...
+           k(ii + Nx*(max(jj-1, 1) - 1)), k(ii + Nx*(min(jj+1, Ng+1) - 1))};
+    rI = []; cI = [];
+    for b = 0:(nb/nh - 1)
+        for q = 1:numel(nbr), rI = [rI; k(:) + b*nh]; cI = [cI; nbr{q}(:) + b*nh]; end %#ok<AGROW>
+    end
+    if nb > nh                                   % attach/detach twins
+        rI = [rI; k(:); k(:) + nh]; cI = [cI; k(:) + nh; k(:)];
+    end
+    rI = [rI; (1:nb)']; cI = [cI; (nb+1)*ones(nb, 1)];
+    opts = odeset(opts, 'JPattern', sparse(rI, cI, 1, nb+1, nb+1) ~= 0);
+end
 tOut = tOut(:);
 % sections: {[t1 t2], velocity, pinned length at t2 (NaN = none)}
 if isfield(ramp, 'seg')      % general protocol (e.g. stretch-hold-release-restretch)

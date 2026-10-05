@@ -1,13 +1,14 @@
-function [Fb, tf, Ff] = modelBinned(params, S, sensor, odeOpts)
+function [Fb, tf, Ff, Fr] = modelBinned(params, S, sensor, odeOpts)
 % modelBinned  Model force on the log bins of a loadStretchHold dataset S,
 % optionally seen through the force transducer (sensor = [f0 zeta], see
 % sensorFilter.m). Utility for FitFirstStretch.m.
 %   S.filtWin  optional rows [t1 t2] of fast windows where the sensor
 %              dynamics matter (default: [0, end of ramp + 15 ms])
 %   tf, Ff     uniform fine-grid model force (filtered) in those windows
+%   Fr         the same model force before the sensor (true fibre force)
 if nargin < 3, sensor = []; end
 if nargin < 4, odeOpts = []; end % [] = simStretchHold default (1e-4)
-tf = []; Ff = [];
+tf = []; Ff = []; Fr = [];
 if isempty(sensor)
     F = simStretchHold(params, S.tSim, S.ramp, odeOpts);
 else
@@ -27,15 +28,16 @@ else
         Fb = nan(size(S.Fb)); return;
     end
     F = interp1(tAll, Fall, S.tSim);
-    tf = cell(size(tw)); Ff = tf;
+    tf = cell(size(tw)); Ff = tf; Fr = tf;
     for w = 1:numel(tw)
         tf{w} = tw{w};
-        Ff{w} = sensorFilter(interp1(tAll, Fall, tw{w}), dtf, sensor(1), sensor(2));
+        Fr{w} = interp1(tAll, Fall, tw{w});
+        Ff{w} = sensorFilter(Fr{w}, dtf, sensor(1), sensor(2));
         in = S.tSim >= tw{w}(1) & S.tSim <= tw{w}(end);
         F(in) = interp1(tw{w}, Ff{w}, S.tSim(in));
     end
     if numel(tf) == 1
-        tf = tf{1}; Ff = Ff{1};
+        tf = tf{1}; Ff = Ff{1}; Fr = Fr{1};
     end
 end
 Fb = S.A*F;
